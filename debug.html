@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Debug Tool - SVP API</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+            background: #f5f7fa;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #1f2937;
+        }
+        h2 {
+            color: #374151;
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            background: #2563eb;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .success {
+            border-left: 4px solid #10b981;
+        }
+        .error {
+            border-left: 4px solid #ef4444;
+        }
+        .warning {
+            border-left: 4px solid #f59e0b;
+        }
+        .info {
+            border-left: 4px solid #3b82f6;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 SVP API Debug Tool</h1>
+    <p>Use this page to test API connectivity and see what data is being returned.</p>
+
+    <!-- Provider Test -->
+    <div class="test-section">
+        <h2>1. Test Providers Endpoint</h2>
+        <button onclick="testProviders()">Test Providers API</button>
+        <div id="providers-result" class="result"></div>
+    </div>
+
+    <!-- VG Categories Test -->
+    <div class="test-section">
+        <h2>2. Test VG Categories</h2>
+        <button onclick="testCategories('vgtv')">Test VG Categories</button>
+        <div id="categories-result" class="result"></div>
+    </div>
+
+    <!-- VG Tags Test -->
+    <div class="test-section">
+        <h2>3. Test VG Tags/Teams</h2>
+        <button onclick="testTags('vgtv')">Test VG Tags</button>
+        <div id="tags-result" class="result"></div>
+    </div>
+
+    <!-- VG Search Test -->
+    <div class="test-section">
+        <h2>4. Test VG Search (for Sport Types)</h2>
+        <button onclick="testSearch('vgtv')">Test VG Search</button>
+        <div id="search-result" class="result"></div>
+    </div>
+
+    <!-- Console Log Display -->
+    <div class="test-section">
+        <h2>5. Console Logs</h2>
+        <button onclick="clearConsole()">Clear Console</button>
+        <div id="console-log" class="result info"></div>
+    </div>
+
+    <script>
+        // Capture console logs
+        const consoleLog = document.getElementById('console-log');
+        const originalLog = console.log;
+        const originalError = console.error;
+        const originalWarn = console.warn;
+
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            consoleLog.innerHTML += '<div style="color: #000;">' + args.join(' ') + '</div>';
+        };
+
+        console.error = function(...args) {
+            originalError.apply(console, args);
+            consoleLog.innerHTML += '<div style="color: #ef4444; font-weight: bold;">ERROR: ' + args.join(' ') + '</div>';
+        };
+
+        console.warn = function(...args) {
+            originalWarn.apply(console, args);
+            consoleLog.innerHTML += '<div style="color: #f59e0b;">WARNING: ' + args.join(' ') + '</div>';
+        };
+
+        function clearConsole() {
+            consoleLog.innerHTML = '';
+        }
+
+        async function testProviders() {
+            const resultDiv = document.getElementById('providers-result');
+            resultDiv.className = 'result info';
+            resultDiv.innerHTML = 'Testing...';
+
+            try {
+                const url = 'https://svp.vg.no/svp/api/v1/providers?appName=edm_antichurn';
+                console.log('📡 Testing URL:', url);
+                
+                const response = await fetch(url);
+                console.log('📥 Response Status:', response.status);
+                
+                const data = await response.json();
+                console.log('📦 Response Data:', data);
+
+                if (response.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = '<strong>✅ SUCCESS</strong><br><br>' + 
+                                         'Status: ' + response.status + '<br><br>' +
+                                         'Data:<br>' + JSON.stringify(data, null, 2);
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.innerHTML = '<strong>❌ ERROR</strong><br><br>' + 
+                                         'Status: ' + response.status + '<br><br>' +
+                                         'Data:<br>' + JSON.stringify(data, null, 2);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = '<strong>❌ FETCH ERROR</strong><br><br>' + error.message;
+            }
+        }
+
+        async function testCategories(provider) {
+            const resultDiv = document.getElementById('categories-result');
+            resultDiv.className = 'result info';
+            resultDiv.innerHTML = 'Testing...';
+
+            try {
+                const url = `https://svp.vg.no/svp/api/v1/${provider}/categories?appName=edm_antichurn`;
+                console.log('📡 Testing URL:', url);
+                
+                const response = await fetch(url);
+                console.log('📥 Response Status:', response.status);
+                
+                const data = await response.json();
+                console.log('📦 Response Data:', data);
+
+                if (response.ok) {
+                    const count = data._embedded?.categories?.length || 0;
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = '<strong>✅ SUCCESS</strong><br><br>' + 
+                                         'Status: ' + response.status + '<br>' +
+                                         'Categories Found: ' + count + '<br><br>' +
+                                         'Data:<br>' + JSON.stringify(data, null, 2);
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.innerHTML = '<strong>❌ ERROR</strong><br><br>' + 
+                                         'Status: ' + response.status + '<br><br>' +
+                                         'Data:<br>' + JSON.stringify(data, null, 2);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = '<strong>❌ FETCH ERROR</strong><br><br>' + error.message;
+            }
+        }
+
+        async function testTags(provider) {
+            const resultDiv = document.getElementById('tags-result');
+            resultDiv.className = 'result info';
+            resultDiv.innerHTML = 'Testing...';
+
+            try {
+                const url = `https://svp.vg.no/svp/api/v1/${provider}/tags?appName=edm_antichurn`;
+                console.log('📡 Testing URL:', url);
+                
+                const response = await fetch(url);
+                console.log('📥 Response Status:', response.status);
+                
+                const data = await response.json();
+                console.log('📦 Response Data:', data);
+
+                if (response.ok) {
+                    const count = data._embedded?.tags?.length || 0;
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = '<strong>✅ SUCCESS</strong><br><br>' + 
+                                         'Status: ' + response.status + '<br>' +
+                                         'Tags Found: ' + count + '<br><br>' +
+                                         'Data:<br>' + JSON.stringify(data, null, 2);
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.innerHTML = '<strong>❌ ERROR</strong><br><br>' + 
+                                         'Status: ' + response.status + '<br><br>' +
+                                         'Data:<br>' + JSON.stringify(data, null, 2);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = '<strong>❌ FETCH ERROR</strong><br><br>' + error.message;
+            }
+        }
+
+        async function testSearch(provider) {
+            const resultDiv = document.getElementById('search-result');
+            resultDiv.className = 'result info';
+            resultDiv.innerHTML = 'Testing...';
+
+            try {
+                const url = `https://svp.vg.no/svp/api/v1/${provider}/search?appName=edm_antichurn&limit=10&additional=metadata`;
+                console.log('📡 Testing URL:', url);
+                
+                const response = await fetch(url);
+                console.log('📥 Response Status:', response.status);
+                
+                const data = await response.json();
+                console.log('📦 Response Data:', data);
+
+                if (response.ok) {
+                    const count = data._embedded?.assets?.length || 0;
+                    const sportTypes = new Set();
+                    
+                    if (data._embedded?.assets) {
+                        data._embedded.assets.forEach(asset => {
+                            if (asset.additional?.metadata?.sportType) {
+                                sportTypes.add(asset.additional.metadata.sportType.value);
+                            }
+                        });
+                    }
+
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = '<strong>✅ SUCCESS</strong><br><br>' + 
+                                         'Status: ' + response.status + '<br>' +
+                                         'Assets Found: ' + count + '<br>' +
+                                         'Sport Types Found: ' + Array.from(sportTypes).join(', ') + '<br><br>' +
+                                         'Data (first 2 assets):<br>' + JSON.stringify(data._embedded?.assets?.slice(0, 2), null, 2);
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.innerHTML = '<strong>❌ ERROR</strong><br><br>' + 
+                                         'Status: ' + response.status + '<br><br>' +
+                                         'Data:<br>' + JSON.stringify(data, null, 2);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = '<strong>❌ FETCH ERROR</strong><br><br>' + error.message;
+            }
+        }
+
+        // Auto-run basic test on load
+        console.log('🚀 Debug tool loaded. Click buttons to test API endpoints.');
+        console.log('💡 Tip: Open browser DevTools (F12) to see network requests.');
+    </script>
+</body>
+</html>
