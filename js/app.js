@@ -47,14 +47,14 @@ class BrazeContentBuilder {
         }, 300));
         
         // Copy buttons
-        document.getElementById('copy-cc-btn').addEventListener('click', () => {
+        document.getElementById('copy-cc-btn').addEventListener('click', (e) => {
             const code = document.getElementById('connected-content-output').textContent;
-            copyToClipboard(code);
+            copyToClipboard(code, e.target);
         });
-        
-        document.getElementById('copy-liquid-btn').addEventListener('click', () => {
+
+        document.getElementById('copy-liquid-btn').addEventListener('click', (e) => {
             const code = document.getElementById('liquid-output').textContent;
-            copyToClipboard(code);
+            copyToClipboard(code, e.target);
         });
         
         // Template tabs
