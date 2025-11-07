@@ -37,6 +37,16 @@ class FilterBuilder {
             label.innerHTML += ' <span style="color: #ef4444;">*</span>';
         }
         wrapper.appendChild(label);
+
+        // Add hint if provided
+        if (filter.hint) {
+            const hint = document.createElement('small');
+            hint.className = 'form-hint';
+            hint.textContent = filter.hint;
+            hint.style.display = 'block';
+            hint.style.marginBottom = '8px';
+            wrapper.appendChild(hint);
+        }
         
         let input;
         
@@ -239,7 +249,7 @@ class FilterBuilder {
      */
     async fetchFilterOptions(filter) {
         const providerConfig = getProvider(this.provider);
-        
+
         // Determine which API endpoint to call based on filter type
         if (filter.id === 'sportType') {
             return await this.fetchSportTypes(providerConfig);
@@ -247,8 +257,10 @@ class FilterBuilder {
             return await this.fetchTeams(providerConfig);
         } else if (filter.id === 'category') {
             return await this.fetchCategories(providerConfig);
+        } else if (filter.id === 'publisher') {
+            return await this.fetchPublishers(providerConfig);
         }
-        
+
         return [];
     }
     
@@ -357,20 +369,20 @@ class FilterBuilder {
      */
     async fetchCategories(providerConfig) {
         console.log('📁 Fetching categories...');
-        
+
         try {
             const url = `${providerConfig.baseUrl}/categories?appName=${providerConfig.appName}`;
             console.log('📡 Fetching from:', url);
-            
+
             const response = await fetch(url);
-            
+
             if (!response.ok) {
                 console.warn('⚠️ Failed to fetch categories, returning empty array');
                 return [];
             }
-            
+
             const data = await response.json();
-            
+
             if (data._embedded && data._embedded.categories) {
                 const categories = data._embedded.categories
                     .filter(cat => cat.showCategory) // Only show visible categories
@@ -379,20 +391,80 @@ class FilterBuilder {
                         label: cat.title
                     }))
                     .sort((a, b) => a.label.localeCompare(b.label));
-                
+
                 console.log('✅ Found', categories.length, 'categories');
                 return categories;
             }
-            
+
             console.warn('⚠️ No categories found in API response');
             return [];
-            
+
         } catch (error) {
             console.error('❌ Error fetching categories:', error);
             return [];
         }
     }
-    
+
+    /**
+     * Fetch publishers from API for podcasts
+     */
+    async fetchPublishers(providerConfig) {
+        console.log('🏢 Fetching publishers for podcasts...');
+
+        // Fallback publishers based on common Schibsted brands
+        const fallbackPublishers = [
+            { value: 'VG', label: 'VG (Verdens Gang)' },
+            { value: 'Aftonbladet', label: 'Aftonbladet' },
+            { value: 'BT', label: 'BT (Bergens Tidende)' },
+            { value: 'Aftenbladet', label: 'Aftenbladet' },
+            { value: 'Svenska Dagbladet', label: 'Svenska Dagbladet (SvD)' },
+            { value: 'Omni', label: 'Omni' }
+        ];
+
+        try {
+            // Query podcast assets to extract unique publishers
+            const url = `${providerConfig.baseUrl}/search?appName=${providerConfig.appName}&streamType=audio&limit=100`;
+            console.log('📡 Fetching from:', url);
+
+            const response = await fetch(url);
+
+            if (!response.ok) {
+                console.warn('⚠️ Failed to fetch publishers from API, using fallback');
+                return fallbackPublishers;
+            }
+
+            const data = await response.json();
+            const publishers = new Set();
+
+            // Extract unique publishers from podcast assets
+            if (data._embedded && data._embedded.assets) {
+                data._embedded.assets.forEach(asset => {
+                    if (asset.publisher) {
+                        publishers.add(asset.publisher);
+                    }
+                });
+            }
+
+            if (publishers.size > 0) {
+                console.log('✅ Found publishers from API:', Array.from(publishers));
+                return Array.from(publishers)
+                    .map(publisher => ({
+                        value: publisher,
+                        label: publisher
+                    }))
+                    .sort((a, b) => a.label.localeCompare(b.label));
+            } else {
+                console.warn('⚠️ No publishers found in API response, using fallback');
+                return fallbackPublishers;
+            }
+
+        } catch (error) {
+            console.error('❌ Error fetching publishers:', error);
+            console.log('✅ Using fallback publishers');
+            return fallbackPublishers;
+        }
+    }
+
     /**
      * Get current filter values
      */

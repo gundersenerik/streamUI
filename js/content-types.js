@@ -217,6 +217,16 @@ const CONTENT_TYPES = {
         },
         filters: [
             {
+                id: 'publisher',
+                label: 'Publisher/Brand',
+                type: 'dropdown',
+                apiPath: 'publisher',
+                operator: '::',
+                fetchOptions: true,
+                required: false,
+                hint: 'Filter podcasts by publisher (e.g., VG, Aftonbladet, BT, etc.)'
+            },
+            {
                 id: 'category',
                 label: 'Podcast Series',
                 type: 'dropdown',
