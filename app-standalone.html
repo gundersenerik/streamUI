@@ -552,6 +552,22 @@ const CONTENT_TYPES = {
             { id: 'limit', label: 'Results', type: 'number', default: 15 }
         ]
     },
+    podcasts: {
+        id: 'podcasts', title: 'Podcasts', subtitle: 'Audio series and episodes', icon: '🎧',
+        baseFilter: 'assetType::audio',
+        discovery: [
+            { id: 'latest', icon: '🆕', title: 'Latest Episodes', desc: 'Most recent', preset: {} },
+            { id: 'week', icon: '📅', title: 'This Week', desc: 'Last 7 days', preset: { timeFilter: 'lastWeek' } },
+            { id: 'month', icon: '🗓️', title: 'This Month', desc: 'Last 30 days', preset: { timeFilter: 'lastMonth' } }
+        ],
+        filters: [
+            { id: 'limit', label: 'Episodes', type: 'number', default: 10 },
+            { id: 'sort', label: 'Sort', type: 'select', options: [
+                { value: '-published', label: 'Newest First' },
+                { value: 'published', label: 'Oldest First' }
+            ]}
+        ]
+    },
     vod: {
         id: 'vod', title: 'Video on Demand', subtitle: 'Pre-recorded content', icon: '🎬',
         baseFilter: 'streamType::vod',
@@ -591,7 +607,11 @@ const TEMPLATES = [
     { id: 'cards', name: 'Card Layout', desc: 'With images',
       code: v => `{% if ${v}._embedded.assets.size > 0 %}\n{% for item in ${v}._embedded.assets %}\n<div style="border:1px solid #eee;border-radius:8px;margin:8px 0;overflow:hidden;">\n  {% if item.images.main %}<img src="{{ item.images.main }}?t[]=400q80" style="width:100%">{% endif %}\n  <div style="padding:12px;"><strong>{{ item.title }}</strong></div>\n</div>\n{% endfor %}\n{% endif %}` },
     { id: 'detailed', name: 'Detailed List', desc: 'Title + description',
-      code: v => `{% if ${v}._embedded.assets.size > 0 %}\n{% for item in ${v}._embedded.assets %}\n<div style="padding:12px 0;border-bottom:1px solid #eee;">\n  <h4 style="margin:0 0 4px;">{{ item.title }}</h4>\n  <p style="color:#666;margin:0;font-size:14px;">{{ item.description | truncate: 100 }}</p>\n</div>\n{% endfor %}\n{% endif %}` }
+      code: v => `{% if ${v}._embedded.assets.size > 0 %}\n{% for item in ${v}._embedded.assets %}\n<div style="padding:12px 0;border-bottom:1px solid #eee;">\n  <h4 style="margin:0 0 4px;">{{ item.title }}</h4>\n  <p style="color:#666;margin:0;font-size:14px;">{{ item.description | truncate: 100 }}</p>\n</div>\n{% endfor %}\n{% endif %}` },
+    { id: 'podcast', name: 'Podcast Episodes', desc: 'Audio-focused layout',
+      code: v => `{% if ${v}._embedded.assets.size > 0 %}\n{% for item in ${v}._embedded.assets %}\n<div style="display:flex;gap:12px;padding:12px 0;border-bottom:1px solid #eee;">\n  <div style="width:60px;height:60px;background:#f0f0f0;border-radius:8px;display:flex;align-items:center;justify-content:center;">🎧</div>\n  <div style="flex:1;">\n    <h4 style="margin:0 0 4px;">{{ item.title }}</h4>\n    <p style="color:#666;font-size:13px;margin:0;">{{ item.description | truncate: 80 }}</p>\n    <small style="color:#999;">{{ item.duration | divided_by: 60000 }} min</small>\n  </div>\n</div>\n{% endfor %}\n{% endif %}` },
+    { id: 'sports', name: 'Sports Schedule', desc: 'Match times and teams',
+      code: v => `{% if ${v}._embedded.assets.size > 0 %}\n{% for item in ${v}._embedded.assets %}\n<div style="display:flex;align-items:center;padding:12px;border-bottom:1px solid #eee;">\n  <div style="width:60px;text-align:center;color:#666;font-size:12px;">\n    {{ item.flightTimes.start | date: "%H:%M" }}<br>\n    {{ item.flightTimes.start | date: "%b %d" }}\n  </div>\n  <div style="flex:1;padding-left:12px;">\n    <strong>{{ item.title }}</strong>\n  </div>\n</div>\n{% endfor %}\n{% endif %}` }
 ];
 
 // ==================== STATE ====================
@@ -629,6 +649,8 @@ function getTimestamp(ref) {
             return Math.floor(eod.getTime() / 1000);
         case '-24h': return now - day;
         case 'week': return now + 7 * day;
+        case '-week': return now - 7 * day;
+        case '-month': return now - 30 * day;
         default: return now;
     }
 }
@@ -664,6 +686,12 @@ function generateUrl() {
             case 'today':
                 filterParts.push(`flightTimes.start>=${now}`);
                 filterParts.push(`flightTimes.start<=${getTimestamp('endOfDay')}`);
+                break;
+            case 'lastWeek':
+                filterParts.push(`published>=${getTimestamp('-week')}`);
+                break;
+            case 'lastMonth':
+                filterParts.push(`published>=${getTimestamp('-month')}`);
                 break;
         }
     }
