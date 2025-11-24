@@ -141,18 +141,48 @@ const API = {
         if (!AppState.provider) {
             return { success: false, error: 'No provider selected' };
         }
-        
+
         try {
             const url = `${AppState.provider.baseUrl}/search?appName=${AppState.provider.appName}&limit=1`;
             const response = await fetch(url);
-            
+
             if (!response.ok) {
                 return { success: false, error: `HTTP ${response.status}` };
             }
-            
+
             return { success: true };
         } catch (error) {
             return { success: false, error: error.message };
+        }
+    },
+
+    /**
+     * Fetch preview data using current filters
+     */
+    async fetchPreview() {
+        if (!AppState.provider) {
+            return { _embedded: { assets: [] } };
+        }
+
+        try {
+            // Build URL using the same logic as Generator
+            const config = AppState.getContentTypeConfig();
+            const { fullUrl } = Generator.buildUrl(config);
+
+            console.log('🔍 Fetching preview:', fullUrl);
+
+            const response = await fetch(fullUrl);
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+
+            const data = await response.json();
+            console.log(`✅ Preview loaded: ${data._embedded?.assets?.length || 0} items`);
+            return data;
+        } catch (error) {
+            console.error('❌ Error fetching preview:', error);
+            throw error;
         }
     }
 };

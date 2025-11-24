@@ -9,19 +9,22 @@ const App = {
      */
     init() {
         console.log('🚀 Initializing SVP Content Builder...');
-        
+
         // Initialize UI references
         UI.init();
-        
+
         // Populate providers
         UI.populateProviders();
-        
+
         // Setup event listeners
         this.setupEventListeners();
-        
+
         // Render initial state
         UI.renderContentType();
-        
+
+        // Initialize preview info
+        UI.updatePreviewInfo(0);
+
         console.log('✅ App initialized');
     },
     
@@ -32,14 +35,25 @@ const App = {
         // Provider selection
         UI.elements.providerSelect.addEventListener('change', (e) => {
             AppState.setProvider(e.target.value);
+            UI.updateProviderState();
             UI.updateVariableName();
             Generator.generateOutput();
-            
+
             // Load podcasts if on podcast view
             if (AppState.contentType === 'podcasts' && AppState.provider) {
                 UI.loadPodcasts();
             }
+
+            // Load preview with new provider
+            UI.loadPreview();
         });
+
+        // Refresh preview button
+        if (UI.elements.refreshPreview) {
+            UI.elements.refreshPreview.addEventListener('click', () => {
+                UI.loadPreview();
+            });
+        }
         
         // Navigation items
         document.querySelectorAll('.nav-item').forEach(item => {
@@ -48,6 +62,7 @@ const App = {
                 item.classList.add('active');
                 AppState.setContentType(item.dataset.type);
                 UI.renderContentType();
+                UI.loadPreview();
             });
         });
         
@@ -92,6 +107,7 @@ const App = {
         document.getElementById('filterReset').addEventListener('click', () => {
             AppState.resetFilters();
             UI.renderContentType();
+            UI.loadPreview();
         });
         
         // Clear podcast selection
@@ -99,6 +115,7 @@ const App = {
             AppState.setFilter('category', null);
             document.querySelectorAll('.podcast-card').forEach(c => c.classList.remove('active'));
             Generator.generateOutput();
+            UI.loadPreview();
         });
         
         // Keyboard shortcuts

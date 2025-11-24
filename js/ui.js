@@ -6,6 +6,9 @@
 const UI = {
     // DOM element references
     elements: null,
+
+    // Debounced preview loader
+    _debouncedPreviewLoader: null,
     
     /**
      * Initialize DOM element references
@@ -13,6 +16,8 @@ const UI = {
     init() {
         this.elements = {
             providerSelect: document.getElementById('providerSelect'),
+            providerSelector: document.querySelector('.provider-selector-prominent'),
+            providerHint: document.getElementById('providerHint'),
             mainTitle: document.getElementById('mainTitle'),
             mainSubtitle: document.getElementById('mainSubtitle'),
             discoveryGrid: document.getElementById('discoveryGrid'),
@@ -26,7 +31,13 @@ const UI = {
             urlOutput: document.getElementById('urlOutput'),
             liquidOutput: document.getElementById('liquidOutput'),
             templateList: document.getElementById('templateList'),
-            toast: document.getElementById('toast')
+            toast: document.getElementById('toast'),
+            // Preview elements
+            previewSection: document.getElementById('previewSection'),
+            previewList: document.getElementById('previewList'),
+            previewCount: document.getElementById('previewCount'),
+            previewProvider: document.getElementById('previewProvider'),
+            refreshPreview: document.getElementById('refreshPreview')
         };
     },
     
@@ -95,8 +106,9 @@ const UI = {
                 card.classList.add('active');
                 AppState.discovery = item.id;
                 Generator.generateOutput();
+                this.queuePreviewRefresh();
             });
-            
+
             this.elements.discoveryGrid.appendChild(card);
         });
     },
@@ -157,8 +169,9 @@ const UI = {
         select.addEventListener('change', (e) => {
             AppState.setFilter(filter.id, e.target.value);
             Generator.generateOutput();
+            this.queuePreviewRefresh();
         });
-        
+
         return select;
     },
     
@@ -180,11 +193,12 @@ const UI = {
         input.addEventListener('input', Utils.debounce((e) => {
             AppState.setFilter(filter.id, e.target.value);
             Generator.generateOutput();
+            this.queuePreviewRefresh();
         }, 300));
-        
+
         return input;
     },
-    
+
     /**
      * Create a date input
      */
@@ -193,12 +207,13 @@ const UI = {
         input.type = 'date';
         input.className = 'filter-input';
         input.id = `filter-${filter.id}`;
-        
+
         input.addEventListener('change', (e) => {
             AppState.setFilter(filter.id, e.target.value);
             Generator.generateOutput();
+            this.queuePreviewRefresh();
         });
-        
+
         return input;
     },
     
@@ -264,8 +279,9 @@ const UI = {
         } else if (label === 'Last Month') {
             AppState.setFilter('dateStart', active ? Utils.getDateString(-30) : null);
         }
-        
+
         Generator.generateOutput();
+        this.queuePreviewRefresh();
     },
     
     /**
@@ -347,8 +363,9 @@ const UI = {
                 card.classList.add('active');
                 AppState.setFilter('category', podcast.id);
                 Generator.generateOutput();
+                this.queuePreviewRefresh();
             });
-            
+
             this.elements.podcastGrid.appendChild(card);
         });
     },
@@ -379,9 +396,164 @@ const UI = {
     showToast(message, type = 'success') {
         this.elements.toast.textContent = message;
         this.elements.toast.className = 'toast show ' + type;
-        
+
         setTimeout(() => {
             this.elements.toast.classList.remove('show');
         }, 2000);
+    },
+
+    /**
+     * Update provider selector visual state
+     */
+    updateProviderState() {
+        if (!this.elements.providerSelector) return;
+
+        if (AppState.provider) {
+            this.elements.providerSelector.classList.add('has-value');
+            this.elements.providerHint.textContent = `Connected to ${AppState.provider.name}`;
+        } else {
+            this.elements.providerSelector.classList.remove('has-value');
+            this.elements.providerHint.textContent = 'Required to generate API calls';
+        }
+    },
+
+    /**
+     * Update preview info bar
+     */
+    updatePreviewInfo(count = 0) {
+        if (!this.elements.previewCount) return;
+
+        this.elements.previewCount.textContent = `${count} item${count !== 1 ? 's' : ''}`;
+        this.elements.previewProvider.textContent = AppState.provider
+            ? `Provider: ${AppState.provider.name}`
+            : 'No provider selected';
+    },
+
+    /**
+     * Queue a debounced preview refresh (500ms delay)
+     */
+    queuePreviewRefresh() {
+        if (this._debouncedPreviewLoader) {
+            clearTimeout(this._debouncedPreviewLoader);
+        }
+        this._debouncedPreviewLoader = setTimeout(() => {
+            this.loadPreview();
+        }, 500);
+    },
+
+    /**
+     * Load and render content preview
+     */
+    async loadPreview() {
+        if (!AppState.provider) {
+            this.renderEmptyPreview('Select a provider to preview content');
+            this.updatePreviewInfo(0);
+            return;
+        }
+
+        // Show loading state
+        this.elements.previewList.innerHTML = `
+            <div class="loading">
+                <div class="loading-spinner"></div>
+                Loading preview...
+            </div>
+        `;
+        this.elements.refreshPreview.classList.add('loading');
+        this.elements.refreshPreview.disabled = true;
+
+        try {
+            const data = await API.fetchPreview();
+            this.renderPreviewList(data);
+        } catch (error) {
+            console.error('Error loading preview:', error);
+            this.renderEmptyPreview('Error loading preview');
+        } finally {
+            this.elements.refreshPreview.classList.remove('loading');
+            this.elements.refreshPreview.disabled = false;
+        }
+    },
+
+    /**
+     * Render empty preview state
+     */
+    renderEmptyPreview(message) {
+        this.elements.previewList.innerHTML = `
+            <div class="preview-empty">
+                <div class="preview-empty-icon">📋</div>
+                <div class="preview-empty-text">${message}</div>
+            </div>
+        `;
+    },
+
+    /**
+     * Render preview list with assets
+     */
+    renderPreviewList(data) {
+        const assets = data?._embedded?.assets || [];
+
+        if (assets.length === 0) {
+            this.renderEmptyPreview('No content found with current filters');
+            this.updatePreviewInfo(0);
+            return;
+        }
+
+        this.updatePreviewInfo(assets.length);
+        this.elements.previewList.innerHTML = '';
+
+        assets.forEach((asset, index) => {
+            const item = document.createElement('div');
+            item.className = 'preview-item';
+
+            // Determine badges
+            const badges = [];
+            if (asset.streamType === 'live') {
+                badges.push('<span class="preview-item-badge live">Live</span>');
+            } else if (asset.streamType === 'vod') {
+                badges.push('<span class="preview-item-badge vod">VOD</span>');
+            }
+            if (asset.additional?.access === 'free') {
+                badges.push('<span class="preview-item-badge free">Free</span>');
+            }
+
+            // Format date/time
+            let timeInfo = '';
+            if (asset.flightTimes?.start) {
+                const date = new Date(asset.flightTimes.start * 1000);
+                timeInfo = date.toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            } else if (asset.published) {
+                const date = new Date(asset.published * 1000);
+                timeInfo = date.toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric'
+                });
+            }
+
+            // Get thumbnail
+            const thumbUrl = asset.images?.main
+                ? `${asset.images.main}?t[]=160q60`
+                : '';
+
+            item.innerHTML = `
+                <div class="preview-item-thumb">
+                    ${thumbUrl ? `<img src="${thumbUrl}" alt="" loading="lazy">` : '📺'}
+                </div>
+                <div class="preview-item-content">
+                    <div class="preview-item-title" title="${Utils.escapeHtml(asset.title)}">${index + 1}. ${Utils.escapeHtml(asset.title)}</div>
+                    <div class="preview-item-meta">
+                        ${badges.join('')}
+                        <span>${asset.category?.title || 'No category'}</span>
+                        ${timeInfo ? `<span>${timeInfo}</span>` : ''}
+                    </div>
+                </div>
+            `;
+
+            this.elements.previewList.appendChild(item);
+        });
     }
 };
