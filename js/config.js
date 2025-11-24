@@ -86,7 +86,7 @@ const CONTENT_TYPES = {
         title: 'Podcasts',
         subtitle: 'Audio series and episodes',
         icon: '🎧',
-        filter: 'streamType::audio',
+        filter: 'assetType::audio',
         discovery: [
             { id: 'latest', title: 'Latest Episodes', desc: 'Most recently published', filter: '' },
             { id: 'popular', title: 'Popular Series', desc: 'Top podcast shows', filter: '' },
@@ -135,14 +135,13 @@ const CONTENT_TYPES = {
             { id: 'everything', title: 'All Content', desc: 'No stream type filter', filter: '' },
             { id: 'live-all', title: 'Live Streams', desc: 'Currently live', filter: 'streamType::live' },
             { id: 'vod-all', title: 'Videos', desc: 'Video on demand', filter: 'streamType::vod' },
-            { id: 'audio-all', title: 'Audio', desc: 'Podcasts & audio', filter: 'streamType::audio' }
+            { id: 'audio-all', title: 'Audio', desc: 'Podcasts & audio', filter: 'assetType::audio' }
         ],
         filters: [
             { id: 'streamType', label: 'Stream Type', type: 'select', options: [
                 { value: '', label: 'All Types' },
                 { value: 'live', label: 'Live' },
-                { value: 'vod', label: 'Video on Demand' },
-                { value: 'audio', label: 'Audio' }
+                { value: 'vod', label: 'Video on Demand' }
             ] },
             { id: 'category', label: 'Category', type: 'select', dynamic: true },
             { id: 'limit', label: 'Results', type: 'number', default: 10, min: 1, max: 100 },
