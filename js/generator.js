@@ -66,7 +66,13 @@ const Generator = {
         if (sort) {
             params.set('sort', sort);
         }
-        
+
+        // Add category as separate parameter (not part of filter)
+        const category = AppState.getFilter('category');
+        if (category) {
+            params.set('category', category);
+        }
+
         const baseUrl = `${AppState.provider.baseUrl}/search`;
         const fullUrl = `${baseUrl}?${params.toString()}`;
         const encodedUrl = fullUrl.replace(/&/g, '%26').replace(/\|/g, '%7C');
@@ -115,11 +121,9 @@ const Generator = {
      */
     addUserFilters(filters) {
         const userFilters = AppState.filters;
-        
-        if (userFilters.category) {
-            filters.push(`categories.id::${userFilters.category}`);
-        }
-        
+
+        // Note: category is handled as a separate URL parameter in buildUrl()
+
         if (userFilters.sportType) {
             filters.push(`additional.metadata.sportType::${userFilters.sportType}`);
         }
