@@ -1,137 +1,111 @@
-// Utility Functions
-
 /**
- * Copy text to clipboard with button visual feedback
+ * SVP Content Builder - Utilities
+ * Helper functions used across the application
  */
-function copyToClipboard(text, buttonElement = null) {
-    navigator.clipboard.writeText(text).then(() => {
-        showNotification('✨ Copied to clipboard!');
 
-        // Add success state to button if provided
-        if (buttonElement) {
-            const originalText = buttonElement.textContent;
-            buttonElement.classList.add('success');
-            buttonElement.textContent = '✓ COPIED!';
-
-            setTimeout(() => {
-                buttonElement.classList.remove('success');
-                buttonElement.textContent = originalText;
-            }, 2000);
-        }
-    }).catch(err => {
-        console.error('Failed to copy:', err);
-        showNotification('❌ Failed to copy', 'error');
-    });
-}
-
-/**
- * Show notification toast with modern gradient styling
- */
-function showNotification(message, type = 'success') {
-    const notification = document.getElementById('notification');
-    notification.textContent = message;
-
-    // Apply gradient based on type
-    if (type === 'error') {
-        notification.style.background = 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';
-        notification.style.boxShadow = '0 12px 32px rgba(239, 68, 68, 0.4)';
-    } else {
-        notification.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
-        notification.style.boxShadow = '0 12px 32px rgba(16, 185, 129, 0.4)';
-    }
-
-    notification.classList.add('show');
-
-    setTimeout(() => {
-        notification.classList.remove('show');
-    }, 3000);
-}
-
-/**
- * Encode filter value for URL
- */
-function encodeFilterValue(value) {
-    return encodeURIComponent(value);
-}
-
-/**
- * Format date to Unix timestamp
- */
-function dateToTimestamp(dateString) {
-    return Math.floor(new Date(dateString).getTime() / 1000);
-}
-
-/**
- * Format date to readable string
- */
-function formatDate(timestamp) {
-    const date = new Date(timestamp * 1000);
-    return date.toLocaleDateString('en-US', { 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-    });
-}
-
-/**
- * Debounce function for input handlers
- */
-function debounce(func, wait) {
-    let timeout;
-    return function executedFunction(...args) {
-        const later = () => {
+const Utils = {
+    /**
+     * Debounce function to limit rapid calls
+     */
+    debounce(fn, delay) {
+        let timeout;
+        return function(...args) {
             clearTimeout(timeout);
-            func(...args);
+            timeout = setTimeout(() => fn.apply(this, args), delay);
         };
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
-    };
-}
-
-/**
- * Generate auto variable name based on provider and content type
- */
-function generateVariableName(provider, contentType) {
-    const providerMap = {
-        'vgtv': 'VG',
-        'ab': 'AB',
-        'aftonbladet': 'AB',
-        'aftenbladet': 'AFT',
-        'bt': 'BT'
-    };
+    },
     
-    const contentTypeMap = {
-        'allLive': 'live',
-        'liveSports': 'sports',
-        'podcasts': 'podcasts',
-        'vodSports': 'sportsvod',
-        'general': 'content'
-    };
+    /**
+     * Copy text to clipboard
+     */
+    async copyToClipboard(text, button) {
+        try {
+            await navigator.clipboard.writeText(text);
+            
+            // Update button state
+            const originalContent = button.innerHTML;
+            button.classList.add('success');
+            button.innerHTML = `
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                Copied!
+            `;
+            
+            UI.showToast('Copied to clipboard!');
+            
+            // Reset button after delay
+            setTimeout(() => {
+                button.classList.remove('success');
+                button.innerHTML = originalContent;
+            }, 2000);
+            
+            return true;
+        } catch (error) {
+            console.error('Failed to copy:', error);
+            UI.showToast('Failed to copy', 'error');
+            return false;
+        }
+    },
     
-    const providerPrefix = providerMap[provider] || provider.toUpperCase();
-    const contentSuffix = contentTypeMap[contentType] || contentType;
+    /**
+     * Get date string with offset
+     */
+    getDateString(daysOffset = 0) {
+        const date = new Date();
+        date.setDate(date.getDate() + daysOffset);
+        return date.toISOString().split('T')[0];
+    },
     
-    return `${providerPrefix}${contentSuffix}`;
-}
-
-/**
- * Show/hide section
- */
-function toggleSection(sectionId, show = true) {
-    const section = document.getElementById(sectionId);
-    if (section) {
-        section.style.display = show ? 'block' : 'none';
+    /**
+     * Convert date to Unix timestamp
+     */
+    dateToTimestamp(dateString) {
+        return Math.floor(new Date(dateString).getTime() / 1000);
+    },
+    
+    /**
+     * Format timestamp to readable date
+     */
+    formatDate(timestamp) {
+        const date = new Date(timestamp * 1000);
+        return date.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    },
+    
+    /**
+     * Escape HTML entities
+     */
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    },
+    
+    /**
+     * Generate a simple unique ID
+     */
+    generateId() {
+        return Math.random().toString(36).substring(2, 9);
+    },
+    
+    /**
+     * Check if value is empty
+     */
+    isEmpty(value) {
+        return value === null || value === undefined || value === '';
+    },
+    
+    /**
+     * Truncate text with ellipsis
+     */
+    truncate(text, maxLength = 100) {
+        if (!text || text.length <= maxLength) return text;
+        return text.substring(0, maxLength).trim() + '...';
     }
-}
-
-/**
- * Clear element content
- */
-function clearElement(elementId) {
-    const element = document.getElementById(elementId);
-    if (element) {
-        element.innerHTML = '';
-    }
-}
+};

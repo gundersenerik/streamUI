@@ -3,155 +3,170 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Braze Connected Content Builder - SVP API</title>
+    <title>SVP Content Builder</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
-    <div class="container">
-        <!-- Header -->
-        <header class="app-header">
-            <h1>Braze Connected Content Builder</h1>
-            <p class="subtitle">Generate SVP API Connected Content for your Braze campaigns</p>
-        </header>
-
-        <!-- Step 1: Provider Selection -->
-        <section class="step-section" id="step-provider">
-            <div class="step-header">
-                <span class="step-number">1</span>
-                <h2>Select Provider</h2>
-            </div>
-            <div class="step-content">
-                <div class="form-group">
-                    <label for="provider-select">Choose your brand:</label>
-                    <select id="provider-select" class="form-control">
-                        <option value="">-- Select Provider --</option>
-                    </select>
+    <div class="app">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <div class="logo-icon">SB</div>
+                <div class="logo-text">
+                    SVP Builder
+                    <span>Braze Content Generator</span>
                 </div>
             </div>
-        </section>
-
-        <!-- Step 2: Content Type Selection -->
-        <section class="step-section" id="step-content-type" style="display: none;">
-            <div class="step-header">
-                <span class="step-number">2</span>
-                <h2>Select Content Type</h2>
-            </div>
-            <div class="step-content">
-                <div id="content-type-cards" class="content-type-grid">
-                    <!-- Dynamically populated -->
+            
+            <nav class="nav-section">
+                <div class="nav-label">Content Type</div>
+                <div class="nav-item active" data-type="live">
+                    <span class="nav-icon">📺</span>
+                    Live Content
                 </div>
-            </div>
-        </section>
-
-        <!-- Step 3: Configure Filters -->
-        <section class="step-section" id="step-filters" style="display: none;">
-            <div class="step-header">
-                <span class="step-number">3</span>
-                <h2>Configure Filters</h2>
-            </div>
-            <div class="step-content">
-                <div id="filters-container">
-                    <!-- Dynamically populated based on content type -->
+                <div class="nav-item" data-type="sports">
+                    <span class="nav-icon">⚽</span>
+                    Sports Events
                 </div>
+                <div class="nav-item" data-type="podcasts">
+                    <span class="nav-icon">🎧</span>
+                    Podcasts
+                </div>
+                <div class="nav-item" data-type="vod">
+                    <span class="nav-icon">🎬</span>
+                    Video on Demand
+                </div>
+                <div class="nav-item" data-type="all">
+                    <span class="nav-icon">📚</span>
+                    All Content
+                </div>
+            </nav>
+            
+            <div class="provider-selector">
+                <div class="provider-label">Provider</div>
+                <select class="provider-select" id="providerSelect">
+                    <option value="">Select provider...</option>
+                </select>
             </div>
-        </section>
-
-        <!-- Step 4: Generated Connected Content -->
-        <section class="step-section" id="step-connected-content" style="display: none;">
-            <div class="step-header">
-                <span class="step-number">4</span>
-                <h2>Generated Connected Content</h2>
+        </aside>
+        
+        <!-- Main Content -->
+        <main class="main">
+            <header class="main-header">
+                <h1 class="main-title" id="mainTitle">Live Content</h1>
+                <p class="main-subtitle" id="mainSubtitle">Fetch currently live streams and broadcasts</p>
+            </header>
+            
+            <!-- Smart Discovery -->
+            <section class="discovery-section" id="discoverySection">
+                <div class="discovery-grid" id="discoveryGrid"></div>
+            </section>
+            
+            <!-- Filters -->
+            <section class="filter-section" id="filterSection">
+                <div class="filter-header">
+                    <h3 class="filter-title">Filters</h3>
+                    <span class="filter-reset" id="filterReset">Reset all</span>
+                </div>
+                <div class="filter-grid" id="filterGrid"></div>
+                <div class="quick-actions" id="quickActions"></div>
+            </section>
+            
+            <!-- Podcast Browser -->
+            <section class="podcast-browser hidden" id="podcastBrowser">
+                <div class="filter-header">
+                    <h3 class="filter-title">Browse Podcast Series</h3>
+                    <span class="filter-reset" id="clearPodcast">Clear selection</span>
+                </div>
+                <div class="podcast-grid" id="podcastGrid">
+                    <div class="loading">
+                        <div class="loading-spinner"></div>
+                        Loading podcasts...
+                    </div>
+                </div>
+            </section>
+        </main>
+        
+        <!-- Output Panel -->
+        <aside class="output-panel">
+            <div class="output-header">
+                <div class="output-title">Variable Name</div>
+                <input type="text" class="variable-input" id="variableName" value="content" placeholder="e.g., myContent">
             </div>
-            <div class="step-content">
-                <div class="form-group">
-                    <label for="variable-name">Variable Name:</label>
-                    <input type="text" id="variable-name" class="form-control" placeholder="e.g., VGsports">
-                    <small class="form-hint">This is the variable name you'll use in your Liquid tags</small>
+            
+            <div class="output-tabs">
+                <button class="output-tab active" data-tab="connected">Connected Content</button>
+                <button class="output-tab" data-tab="liquid">Liquid Templates</button>
+            </div>
+            
+            <div class="output-content">
+                <!-- Connected Content Tab -->
+                <div class="output-section active" id="connectedTab">
+                    <div class="code-container">
+                        <div class="code-label">
+                            <span class="code-label-text">Braze Code</span>
+                            <button class="copy-btn" data-copy="connected">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                </svg>
+                                Copy
+                            </button>
+                        </div>
+                        <pre class="code-block" id="connectedOutput">{% connected_content ... :save content %}</pre>
+                    </div>
+                    
+                    <div class="code-container">
+                        <div class="code-label">
+                            <span class="code-label-text">Readable URL</span>
+                            <button class="copy-btn" data-copy="url">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                </svg>
+                                Copy
+                            </button>
+                        </div>
+                        <pre class="code-block code-block--small" id="urlOutput">https://svp.vg.no/...</pre>
+                    </div>
                 </div>
                 
-                <div class="code-output">
-                    <div class="code-header">
-                        <span>Connected Content Code</span>
-                        <button id="copy-cc-btn" class="btn-copy">Copy to Clipboard</button>
-                    </div>
-                    <pre id="connected-content-output" class="code-block">
-<!-- Your generated code will appear here -->
-                    </pre>
-                </div>
-
-                <div class="api-url-section">
-                    <details>
-                        <summary>View Full API URL</summary>
-                        <pre id="api-url-display" class="code-block-small"></pre>
-                    </details>
-                </div>
-            </div>
-        </section>
-
-        <!-- Step 5: Liquid Template Library -->
-        <section class="step-section" id="step-liquid-templates" style="display: none;">
-            <div class="step-header">
-                <span class="step-number">5</span>
-                <h2>Liquid Template Library</h2>
-            </div>
-            <div class="step-content">
-                <div class="template-tabs">
-                    <button class="tab-btn active" data-tab="single">Single Item</button>
-                    <button class="tab-btn" data-tab="loop">List/Loop</button>
-                    <button class="tab-btn" data-tab="conditional">Conditional</button>
-                    <button class="tab-btn" data-tab="custom">Custom Fields</button>
-                </div>
-
-                <div id="template-single" class="template-tab-content active">
-                    <div id="single-templates-list" class="template-list">
-                        <!-- Dynamically populated -->
-                    </div>
-                </div>
-
-                <div id="template-loop" class="template-tab-content">
-                    <div id="loop-templates-list" class="template-list">
-                        <!-- Dynamically populated -->
-                    </div>
-                </div>
-
-                <div id="template-conditional" class="template-tab-content">
-                    <div id="conditional-templates-list" class="template-list">
-                        <!-- Dynamically populated -->
-                    </div>
-                </div>
-
-                <div id="template-custom" class="template-tab-content">
-                    <div class="custom-fields-builder">
-                        <p>Select fields you want to display:</p>
-                        <div id="custom-fields-list">
-                            <!-- Dynamically populated checkboxes -->
+                <!-- Liquid Templates Tab -->
+                <div class="output-section" id="liquidTab">
+                    <div class="template-list" id="templateList"></div>
+                    
+                    <div class="code-container" style="margin-top: 20px;">
+                        <div class="code-label">
+                            <span class="code-label-text">Liquid Code</span>
+                            <button class="copy-btn" data-copy="liquid">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                </svg>
+                                Copy
+                            </button>
                         </div>
+                        <pre class="code-block" id="liquidOutput">Select a template above...</pre>
                     </div>
-                </div>
-
-                <div class="code-output">
-                    <div class="code-header">
-                        <span>Liquid Template Code</span>
-                        <button id="copy-liquid-btn" class="btn-copy">Copy to Clipboard</button>
-                    </div>
-                    <pre id="liquid-output" class="code-block">
-<!-- Your generated Liquid code will appear here -->
-                    </pre>
                 </div>
             </div>
-        </section>
-
-        <!-- Notification Toast -->
-        <div id="notification" class="notification"></div>
+        </aside>
     </div>
+    
+    <!-- Toast Notification -->
+    <div class="toast" id="toast">Copied to clipboard!</div>
 
-    <!-- JavaScript Modules -->
+    <!-- JavaScript Modules (order matters) -->
+    <script src="js/config.js"></script>
+    <script src="js/templates.js"></script>
+    <script src="js/state.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/generator.js"></script>
     <script src="js/utils.js"></script>
-    <script src="js/providers.js"></script>
-    <script src="js/content-types.js"></script>
-    <script src="js/filter-builder.js"></script>
-    <script src="js/url-generator.js"></script>
-    <script src="js/liquid-library.js"></script>
     <script src="js/app.js"></script>
 </body>
 </html>
