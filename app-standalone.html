@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SVP Content Builder</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            background: white;
+            padding: 16px 24px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .logo span {
+            display: block;
+            font-size: 12px;
+            font-weight: 400;
+            color: #666;
+        }
+
+        .provider-select {
+            padding: 10px 16px;
+            font-size: 14px;
+            border: 2px solid #0066ff;
+            border-radius: 8px;
+            background: #e6f0ff;
+            cursor: pointer;
+            min-width: 200px;
+        }
+
+        /* Layout */
+        .layout {
+            display: grid;
+            grid-template-columns: 220px 1fr 380px;
+            min-height: calc(100vh - 70px);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            background: white;
+            border-right: 1px solid #e0e0e0;
+            padding: 20px 16px;
+        }
+
+        .nav-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: #999;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+        }
+
+        .nav-item {
+            padding: 10px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-item:hover { background: #f5f5f5; }
+        .nav-item.active { background: #e6f0ff; color: #0066ff; }
+
+        /* Main */
+        .main {
+            padding: 24px;
+            overflow-y: auto;
+        }
+
+        .main-title {
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .main-subtitle {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        /* Discovery Cards */
+        .discovery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .discovery-card {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .discovery-card:hover {
+            border-color: #ccc;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+
+        .discovery-card.active {
+            border-color: #0066ff;
+            background: #e6f0ff;
+        }
+
+        .discovery-icon { font-size: 24px; margin-bottom: 8px; }
+        .discovery-title { font-weight: 600; font-size: 14px; }
+        .discovery-desc { font-size: 12px; color: #666; }
+
+        /* Filters */
+        .filter-section {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .filter-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .filter-title { font-weight: 600; }
+
+        .filter-reset {
+            font-size: 12px;
+            color: #666;
+            cursor: pointer;
+        }
+
+        .filter-reset:hover { color: #0066ff; }
+
+        .filter-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+        }
+
+        .filter-group label {
+            display: block;
+            font-size: 11px;
+            font-weight: 600;
+            color: #666;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+
+        .filter-group select,
+        .filter-group input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .filter-group select:focus,
+        .filter-group input:focus {
+            outline: none;
+            border-color: #0066ff;
+        }
+
+        /* Preview */
+        .preview-section {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .preview-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            background: #f9f9f9;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .preview-btn {
+            padding: 8px 16px;
+            background: #0066ff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .preview-btn:hover { background: #0052cc; }
+        .preview-btn:disabled { background: #ccc; cursor: not-allowed; }
+
+        .preview-results {
+            max-height: 350px;
+            overflow-y: auto;
+        }
+
+        .preview-empty {
+            padding: 40px;
+            text-align: center;
+            color: #999;
+        }
+
+        .preview-empty-icon { font-size: 32px; margin-bottom: 8px; }
+
+        .preview-item {
+            display: flex;
+            gap: 12px;
+            padding: 12px 20px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .preview-item:hover { background: #f9f9f9; }
+
+        .preview-thumb {
+            width: 80px;
+            height: 50px;
+            background: #eee;
+            border-radius: 6px;
+            overflow: hidden;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+        }
+
+        .preview-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .preview-item-title {
+            font-weight: 600;
+            font-size: 13px;
+            margin-bottom: 4px;
+        }
+
+        .preview-item-meta {
+            font-size: 11px;
+            color: #666;
+        }
+
+        .preview-badge {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 600;
+            margin-right: 8px;
+        }
+
+        .preview-badge.live { background: #fee2e2; color: #dc2626; }
+        .preview-badge.vod { background: #dbeafe; color: #2563eb; }
+        .preview-badge.audio { background: #fef3c7; color: #d97706; }
+
+        /* Output Panel */
+        .output-panel {
+            background: white;
+            border-left: 1px solid #e0e0e0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .output-header {
+            padding: 20px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .output-header label {
+            display: block;
+            font-size: 11px;
+            font-weight: 600;
+            color: #666;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        .variable-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .output-tabs {
+            display: flex;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .output-tab {
+            flex: 1;
+            padding: 12px;
+            background: none;
+            border: none;
+            font-weight: 600;
+            font-size: 12px;
+            color: #666;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+        }
+
+        .output-tab.active {
+            color: #0066ff;
+            border-bottom-color: #0066ff;
+        }
+
+        .output-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .output-section { display: none; }
+        .output-section.active { display: block; }
+
+        .code-block {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            padding: 14px;
+            border-radius: 8px;
+            white-space: pre-wrap;
+            word-break: break-all;
+            margin-bottom: 16px;
+        }
+
+        .code-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .code-label-text {
+            font-size: 11px;
+            font-weight: 600;
+            color: #666;
+            text-transform: uppercase;
+        }
+
+        .copy-btn {
+            padding: 4px 10px;
+            font-size: 11px;
+            background: #e6f0ff;
+            color: #0066ff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .copy-btn:hover { background: #0066ff; color: white; }
+
+        /* Templates */
+        .template-item {
+            padding: 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-bottom: 8px;
+        }
+
+        .template-item:hover { background: #f9f9f9; }
+        .template-item.active { border-color: #0066ff; background: #e6f0ff; }
+        .template-name { font-weight: 600; font-size: 13px; }
+        .template-desc { font-size: 11px; color: #666; }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            padding: 12px 20px;
+            background: #333;
+            color: white;
+            border-radius: 8px;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s;
+        }
+
+        .toast.show { transform: translateY(0); opacity: 1; }
+        .toast.success { background: #10b981; }
+        .toast.error { background: #ef4444; }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .layout { grid-template-columns: 1fr; }
+            .sidebar, .output-panel { border: none; border-bottom: 1px solid #e0e0e0; }
+        }
+    </style>
+</head>
+<body>
+
+<header class="header">
+    <div class="logo">
+        SVP Content Builder
+        <span>Braze Connected Content Generator</span>
+    </div>
+    <select class="provider-select" id="providerSelect">
+        <option value="">— Select Provider —</option>
+        <option value="vgtv">VG (Verdens Gang)</option>
+        <option value="ab">Aftonbladet</option>
+        <option value="bt">BT (Bergens Tidende)</option>
+        <option value="aftenbladet">Aftenbladet</option>
+    </select>
+</header>
+
+<div class="layout">
+    <aside class="sidebar">
+        <div class="nav-label">Content Type</div>
+        <div id="navSection"></div>
+    </aside>
+
+    <main class="main">
+        <h1 class="main-title" id="mainTitle">Live Content</h1>
+        <p class="main-subtitle" id="mainSubtitle">Fetch currently live streams and broadcasts</p>
+
+        <div class="discovery-grid" id="discoveryGrid"></div>
+
+        <section class="filter-section">
+            <div class="filter-header">
+                <span class="filter-title">Filters</span>
+                <span class="filter-reset" id="filterReset">Reset all</span>
+            </div>
+            <div class="filter-grid" id="filterGrid"></div>
+        </section>
+
+        <section class="preview-section">
+            <div class="preview-header">
+                <span>📋 Content Preview</span>
+                <button class="preview-btn" id="previewBtn">Load Preview</button>
+            </div>
+            <div class="preview-results" id="previewResults">
+                <div class="preview-empty">
+                    <div class="preview-empty-icon">🔍</div>
+                    <div>Click "Load Preview" to see content</div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <aside class="output-panel">
+        <div class="output-header">
+            <label>Variable Name</label>
+            <input type="text" class="variable-input" id="variableName" value="content">
+        </div>
+        <div class="output-tabs">
+            <button class="output-tab active" data-tab="connected">Connected Content</button>
+            <button class="output-tab" data-tab="liquid">Liquid Templates</button>
+        </div>
+        <div class="output-content">
+            <div class="output-section active" id="connectedTab">
+                <div class="code-label">
+                    <span class="code-label-text">Braze Code</span>
+                    <button class="copy-btn" onclick="copyText('connectedOutput')">Copy</button>
+                </div>
+                <pre class="code-block" id="connectedOutput">Select a provider to begin...</pre>
+
+                <div class="code-label">
+                    <span class="code-label-text">Readable URL</span>
+                    <button class="copy-btn" onclick="copyText('urlOutput')">Copy</button>
+                </div>
+                <pre class="code-block" id="urlOutput">https://svp.vg.no/...</pre>
+            </div>
+            <div class="output-section" id="liquidTab">
+                <div id="templateList"></div>
+                <div class="code-label" style="margin-top:16px;">
+                    <span class="code-label-text">Liquid Code</span>
+                    <button class="copy-btn" onclick="copyText('liquidOutput')">Copy</button>
+                </div>
+                <pre class="code-block" id="liquidOutput">Select a template above...</pre>
+            </div>
+        </div>
+    </aside>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ==================== CONFIGURATION ====================
+const PROVIDERS = {
+    vgtv: { id: 'vgtv', name: 'VG', baseUrl: 'https://svp.vg.no/svp/api/v1/vgtv', appName: 'edm_antichurn' },
+    ab: { id: 'ab', name: 'Aftonbladet', baseUrl: 'https://svp.vg.no/svp/api/v1/ab', appName: 'braze_test' },
+    bt: { id: 'bt', name: 'BT', baseUrl: 'https://svp.vg.no/svp/api/v1/bt', appName: 'edm_antichurn' },
+    aftenbladet: { id: 'aftenbladet', name: 'Aftenbladet', baseUrl: 'https://svp.vg.no/svp/api/v1/aftenbladet', appName: 'edm_antichurn' }
+};
+
+const CONTENT_TYPES = {
+    live: {
+        id: 'live', title: 'Live Content', subtitle: 'Currently live streams', icon: '📺',
+        baseFilter: 'streamType::live',
+        discovery: [
+            { id: 'all', icon: '🔴', title: 'All Live', desc: 'Everything streaming', preset: {} },
+            { id: 'upcoming', icon: '📅', title: 'Starting Soon', desc: 'Next 3 hours', preset: { timeFilter: 'next3h' } }
+        ],
+        filters: [
+            { id: 'limit', label: 'Results', type: 'number', default: 10 },
+            { id: 'sort', label: 'Sort', type: 'select', options: [
+                { value: '-flightTimes.start', label: 'Newest First' },
+                { value: 'flightTimes.start', label: 'Oldest First' }
+            ]}
+        ]
+    },
+    sports: {
+        id: 'sports', title: 'Sports Events', subtitle: 'Live sports broadcasts', icon: '⚽',
+        baseFilter: 'streamType::live',
+        discovery: [
+            { id: 'live', icon: '🔴', title: 'Live Now', desc: 'Games in progress', preset: {} },
+            { id: 'today', icon: '📆', title: 'Today', desc: 'All events today', preset: { timeFilter: 'today' } }
+        ],
+        filters: [
+            { id: 'sportType', label: 'Sport', type: 'select', options: [
+                { value: '', label: 'All Sports' },
+                { value: 'football', label: '⚽ Football' },
+                { value: 'hockey', label: '🏒 Hockey' },
+                { value: 'handball', label: '🤾 Handball' }
+            ]},
+            { id: 'limit', label: 'Results', type: 'number', default: 15 }
+        ]
+    },
+    vod: {
+        id: 'vod', title: 'Video on Demand', subtitle: 'Pre-recorded content', icon: '🎬',
+        baseFilter: 'streamType::vod',
+        discovery: [
+            { id: 'latest', icon: '🆕', title: 'Latest', desc: 'Most recent', preset: {} }
+        ],
+        filters: [
+            { id: 'limit', label: 'Results', type: 'number', default: 10 },
+            { id: 'sort', label: 'Sort', type: 'select', options: [
+                { value: '-published', label: 'Newest First' },
+                { value: 'published', label: 'Oldest First' }
+            ]}
+        ]
+    },
+    all: {
+        id: 'all', title: 'All Content', subtitle: 'Search everything', icon: '📚',
+        baseFilter: '',
+        discovery: [
+            { id: 'everything', icon: '📚', title: 'All', desc: 'No filters', preset: {} },
+            { id: 'live', icon: '📺', title: 'Live', desc: 'Streaming now', preset: { streamType: 'live' } },
+            { id: 'vod', icon: '🎬', title: 'Videos', desc: 'On demand', preset: { streamType: 'vod' } }
+        ],
+        filters: [
+            { id: 'streamType', label: 'Type', type: 'select', options: [
+                { value: '', label: 'All Types' },
+                { value: 'live', label: 'Live' },
+                { value: 'vod', label: 'Video' }
+            ]},
+            { id: 'limit', label: 'Results', type: 'number', default: 10 }
+        ]
+    }
+};
+
+const TEMPLATES = [
+    { id: 'simple', name: 'Simple List', desc: 'Basic bullet list',
+      code: v => `{% if ${v}._embedded.assets.size > 0 %}\n<ul>\n{% for item in ${v}._embedded.assets %}\n  <li>{{ item.title }}</li>\n{% endfor %}\n</ul>\n{% endif %}` },
+    { id: 'cards', name: 'Card Layout', desc: 'With images',
+      code: v => `{% if ${v}._embedded.assets.size > 0 %}\n{% for item in ${v}._embedded.assets %}\n<div style="border:1px solid #eee;border-radius:8px;margin:8px 0;overflow:hidden;">\n  {% if item.images.main %}<img src="{{ item.images.main }}?t[]=400q80" style="width:100%">{% endif %}\n  <div style="padding:12px;"><strong>{{ item.title }}</strong></div>\n</div>\n{% endfor %}\n{% endif %}` },
+    { id: 'detailed', name: 'Detailed List', desc: 'Title + description',
+      code: v => `{% if ${v}._embedded.assets.size > 0 %}\n{% for item in ${v}._embedded.assets %}\n<div style="padding:12px 0;border-bottom:1px solid #eee;">\n  <h4 style="margin:0 0 4px;">{{ item.title }}</h4>\n  <p style="color:#666;margin:0;font-size:14px;">{{ item.description | truncate: 100 }}</p>\n</div>\n{% endfor %}\n{% endif %}` }
+];
+
+// ==================== STATE ====================
+const state = {
+    provider: null,
+    contentType: 'live',
+    filters: {},
+    discovery: null,
+    selectedTemplate: null
+};
+
+// ==================== HELPERS ====================
+const $ = id => document.getElementById(id);
+
+function showToast(msg, type = '') {
+    const toast = $('toast');
+    toast.textContent = msg;
+    toast.className = 'toast show ' + type;
+    setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+function copyText(id) {
+    const text = $(id).textContent;
+    navigator.clipboard.writeText(text).then(() => showToast('Copied!', 'success'));
+}
+
+function getTimestamp(ref) {
+    const now = Math.floor(Date.now() / 1000);
+    const day = 86400;
+    switch(ref) {
+        case 'now': return now;
+        case '3h': return now + 3 * 3600;
+        case 'endOfDay':
+            const eod = new Date(); eod.setHours(23,59,59);
+            return Math.floor(eod.getTime() / 1000);
+        case '-24h': return now - day;
+        case 'week': return now + 7 * day;
+        default: return now;
+    }
+}
+
+// ==================== URL GENERATION ====================
+function generateUrl() {
+    if (!state.provider) return { encoded: '', readable: '' };
+
+    const provider = PROVIDERS[state.provider];
+    const config = CONTENT_TYPES[state.contentType];
+    const filterParts = [];
+
+    if (config.baseFilter) filterParts.push(config.baseFilter);
+
+    if (state.filters.streamType) {
+        const idx = filterParts.findIndex(f => f.startsWith('streamType'));
+        if (idx > -1) filterParts.splice(idx, 1);
+        filterParts.push(`streamType::${state.filters.streamType}`);
+    }
+
+    if (state.filters.sportType) {
+        filterParts.push(`additional.metadata.sportType::${state.filters.sportType}`);
+    }
+
+    // Time filters
+    if (state.filters.timeFilter) {
+        const now = getTimestamp('now');
+        switch(state.filters.timeFilter) {
+            case 'next3h':
+                filterParts.push(`flightTimes.start>=${now}`);
+                filterParts.push(`flightTimes.start<=${getTimestamp('3h')}`);
+                break;
+            case 'today':
+                filterParts.push(`flightTimes.start>=${now}`);
+                filterParts.push(`flightTimes.start<=${getTimestamp('endOfDay')}`);
+                break;
+        }
+    }
+
+    const params = new URLSearchParams();
+    params.set('appName', provider.appName);
+    if (filterParts.length > 0) params.set('filter', filterParts.join('|'));
+    params.set('limit', state.filters.limit || '10');
+    if (state.filters.sort) params.set('sort', state.filters.sort);
+    params.set('additional', 'tags|metadata');
+
+    const readable = `${provider.baseUrl}/search?${params.toString()}`;
+    const encoded = readable.replace(/&/g, '%26').replace(/\|/g, '%7C');
+
+    return { encoded, readable };
+}
+
+function updateOutputs() {
+    const urls = generateUrl();
+    const varName = $('variableName').value || 'content';
+
+    if (!urls.encoded) {
+        $('connectedOutput').textContent = 'Select a provider to begin...';
+        $('urlOutput').textContent = 'https://svp.vg.no/...';
+    } else {
+        $('connectedOutput').textContent = `{% connected_content ${urls.encoded} :save ${varName} %}`;
+        $('urlOutput').textContent = urls.readable;
+    }
+
+    // Update liquid output
+    if (state.selectedTemplate) {
+        const tmpl = TEMPLATES.find(t => t.id === state.selectedTemplate);
+        $('liquidOutput').textContent = tmpl ? tmpl.code(varName) : 'Select a template...';
+    }
+}
+
+// ==================== UI RENDERING ====================
+function renderNav() {
+    const nav = $('navSection');
+    nav.innerHTML = Object.values(CONTENT_TYPES).map(ct => `
+        <div class="nav-item ${ct.id === state.contentType ? 'active' : ''}" data-type="${ct.id}">
+            <span>${ct.icon}</span> ${ct.title}
+        </div>
+    `).join('');
+
+    nav.querySelectorAll('.nav-item').forEach(item => {
+        item.onclick = () => {
+            state.contentType = item.dataset.type;
+            state.filters = {};
+            state.discovery = null;
+            renderAll();
+        };
+    });
+}
+
+function renderDiscovery() {
+    const config = CONTENT_TYPES[state.contentType];
+    const grid = $('discoveryGrid');
+
+    grid.innerHTML = config.discovery.map(d => `
+        <div class="discovery-card ${state.discovery === d.id ? 'active' : ''}" data-id="${d.id}">
+            <div class="discovery-icon">${d.icon}</div>
+            <div class="discovery-title">${d.title}</div>
+            <div class="discovery-desc">${d.desc}</div>
+        </div>
+    `).join('');
+
+    grid.querySelectorAll('.discovery-card').forEach(card => {
+        card.onclick = () => {
+            const id = card.dataset.id;
+            const disc = config.discovery.find(d => d.id === id);
+
+            if (state.discovery === id) {
+                state.discovery = null;
+                delete state.filters.timeFilter;
+                delete state.filters.streamType;
+            } else {
+                state.discovery = id;
+                if (disc.preset) Object.assign(state.filters, disc.preset);
+            }
+            renderAll();
+        };
+    });
+}
+
+function renderFilters() {
+    const config = CONTENT_TYPES[state.contentType];
+    const grid = $('filterGrid');
+
+    grid.innerHTML = config.filters.map(f => {
+        let input = '';
+        if (f.type === 'select') {
+            input = `<select data-filter="${f.id}">
+                ${f.options.map(o => `<option value="${o.value}" ${state.filters[f.id] === o.value ? 'selected' : ''}>${o.label}</option>`).join('')}
+            </select>`;
+        } else if (f.type === 'number') {
+            input = `<input type="number" data-filter="${f.id}" value="${state.filters[f.id] || f.default || 10}" min="1" max="100">`;
+        }
+        return `<div class="filter-group"><label>${f.label}</label>${input}</div>`;
+    }).join('');
+
+    grid.querySelectorAll('select, input').forEach(el => {
+        el.onchange = () => {
+            state.filters[el.dataset.filter] = el.value;
+            updateOutputs();
+        };
+    });
+}
+
+function renderTemplates() {
+    const list = $('templateList');
+    list.innerHTML = TEMPLATES.map(t => `
+        <div class="template-item ${state.selectedTemplate === t.id ? 'active' : ''}" data-id="${t.id}">
+            <div class="template-name">${t.name}</div>
+            <div class="template-desc">${t.desc}</div>
+        </div>
+    `).join('');
+
+    list.querySelectorAll('.template-item').forEach(item => {
+        item.onclick = () => {
+            state.selectedTemplate = item.dataset.id;
+            renderTemplates();
+            updateOutputs();
+        };
+    });
+}
+
+function renderAll() {
+    const config = CONTENT_TYPES[state.contentType];
+    $('mainTitle').textContent = config.title;
+    $('mainSubtitle').textContent = config.subtitle;
+
+    renderNav();
+    renderDiscovery();
+    renderFilters();
+    updateOutputs();
+}
+
+// ==================== PREVIEW ====================
+async function loadPreview() {
+    if (!state.provider) {
+        showToast('Select a provider first', 'error');
+        return;
+    }
+
+    const btn = $('previewBtn');
+    const results = $('previewResults');
+
+    btn.disabled = true;
+    btn.textContent = 'Loading...';
+
+    try {
+        const { readable } = generateUrl();
+        const response = await fetch(readable);
+
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+        const data = await response.json();
+        const assets = data._embedded?.assets || [];
+
+        if (assets.length === 0) {
+            results.innerHTML = '<div class="preview-empty"><div class="preview-empty-icon">📭</div><div>No content found</div></div>';
+        } else {
+            results.innerHTML = assets.map(item => `
+                <div class="preview-item">
+                    <div class="preview-thumb">
+                        ${item.images?.main ? `<img src="${item.images.main}?t[]=160q80" alt="">` : '📷'}
+                    </div>
+                    <div>
+                        <div class="preview-item-title">${item.title || 'Untitled'}</div>
+                        <div class="preview-item-meta">
+                            <span class="preview-badge ${item.streamType || 'vod'}">${(item.streamType || 'vod').toUpperCase()}</span>
+                            ${item.category?.title || ''}
+                        </div>
+                    </div>
+                </div>
+            `).join('') + `<div style="padding:12px 20px;background:#f9f9f9;font-size:12px;color:#666;">Showing ${assets.length} items</div>`;
+        }
+    } catch (err) {
+        console.error(err);
+        results.innerHTML = `<div class="preview-empty"><div class="preview-empty-icon">⚠️</div><div>Error: ${err.message}</div></div>`;
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Load Preview';
+    }
+}
+
+// ==================== INIT ====================
+document.addEventListener('DOMContentLoaded', () => {
+    // Provider change
+    $('providerSelect').onchange = e => {
+        state.provider = e.target.value || null;
+        if (state.provider) {
+            $('variableName').value = PROVIDERS[state.provider].name + state.contentType.charAt(0).toUpperCase() + state.contentType.slice(1);
+        }
+        updateOutputs();
+    };
+
+    // Filter reset
+    $('filterReset').onclick = () => {
+        state.filters = {};
+        state.discovery = null;
+        renderAll();
+    };
+
+    // Variable name change
+    $('variableName').oninput = updateOutputs;
+
+    // Preview button
+    $('previewBtn').onclick = loadPreview;
+
+    // Output tabs
+    document.querySelectorAll('.output-tab').forEach(tab => {
+        tab.onclick = () => {
+            document.querySelectorAll('.output-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.output-section').forEach(s => s.classList.remove('active'));
+            tab.classList.add('active');
+            $(tab.dataset.tab + 'Tab').classList.add('active');
+        };
+    });
+
+    // Initial render
+    renderAll();
+    renderTemplates();
+
+    console.log('✅ SVP Content Builder ready!');
+});
+</script>
+</body>
+</html>
