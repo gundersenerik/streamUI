@@ -596,10 +596,10 @@ const CONTENT_TYPES = {
             { id: 'everything', icon: '📚', title: 'All', desc: 'No filters', preset: {} },
             { id: 'live', icon: '📺', title: 'Live', desc: 'Streaming now', preset: { streamType: 'live' } },
             { id: 'vod', icon: '🎬', title: 'Videos', desc: 'On demand', preset: { streamType: 'vod' } },
-            { id: 'audio', icon: '🎧', title: 'Audio', desc: 'Podcasts', preset: { streamType: 'audio' } }
+            { id: 'audio', icon: '🎧', title: 'Audio', desc: 'Podcasts', preset: { assetType: 'audio' } }
         ],
         filters: [
-            { id: 'streamType', label: 'Type', type: 'select', options: [
+            { id: 'contentType', label: 'Type', type: 'select', options: [
                 { value: '', label: 'All Types' },
                 { value: 'live', label: 'Live' },
                 { value: 'vod', label: 'Video' },
@@ -705,17 +705,35 @@ async function fetchSeries() {
 
     const provider = PROVIDERS[state.provider];
     try {
-        const url = `${provider.baseUrl}/categories?appName=${provider.appName}&filter=additional.assetType::audio`;
-        console.log('Fetching series:', url);
+        // Derive podcast categories from actual audio content
+        // This is more reliable than the categories endpoint which doesn't filter properly
+        const url = `${provider.baseUrl}/search?appName=${provider.appName}&filter=assetType::audio&limit=200`;
+        console.log('Fetching podcast series from audio content:', url);
         const response = await fetch(url);
         const data = await response.json();
 
-        const series = data._embedded?.categories || data.categories || [];
+        const assets = data._embedded?.assets || [];
+
+        // Extract unique categories from audio content
+        const categoryMap = new Map();
+        for (const asset of assets) {
+            if (asset.category && asset.category.id && asset.category.title) {
+                categoryMap.set(asset.category.id, {
+                    id: asset.category.id,
+                    title: asset.category.title
+                });
+            }
+        }
+
+        // Convert to array and sort by title
+        const series = Array.from(categoryMap.values())
+            .sort((a, b) => a.title.localeCompare(b.title));
+
         state.cache.series[state.provider] = series;
-        console.log(`Loaded ${series.length} series`);
+        console.log(`Loaded ${series.length} podcast series (derived from audio content)`);
         return series;
     } catch (error) {
-        console.error('Failed to fetch series:', error);
+        console.error('Failed to fetch podcast series:', error);
         return [];
     }
 }
@@ -758,10 +776,31 @@ function generateUrl() {
 
     if (config.baseFilter) filterParts.push(config.baseFilter);
 
+    // Handle assetType filter (from presets like "Audio" in All Content)
+    if (state.filters.assetType) {
+        const idx = filterParts.findIndex(f => f.startsWith('assetType'));
+        if (idx > -1) filterParts.splice(idx, 1);
+        filterParts.push(`assetType::${state.filters.assetType}`);
+    }
+
     if (state.filters.streamType) {
         const idx = filterParts.findIndex(f => f.startsWith('streamType'));
         if (idx > -1) filterParts.splice(idx, 1);
         filterParts.push(`streamType::${state.filters.streamType}`);
+    }
+
+    // Handle contentType filter (unified filter for All Content section)
+    // Maps: live -> streamType::live, vod -> streamType::vod, audio -> assetType::audio
+    if (state.filters.contentType) {
+        if (state.filters.contentType === 'audio') {
+            const idx = filterParts.findIndex(f => f.startsWith('assetType'));
+            if (idx > -1) filterParts.splice(idx, 1);
+            filterParts.push('assetType::audio');
+        } else {
+            const idx = filterParts.findIndex(f => f.startsWith('streamType'));
+            if (idx > -1) filterParts.splice(idx, 1);
+            filterParts.push(`streamType::${state.filters.contentType}`);
+        }
     }
 
     if (state.filters.sportType) {
@@ -866,6 +905,8 @@ function renderDiscovery() {
                 state.discovery = null;
                 delete state.filters.timeFilter;
                 delete state.filters.streamType;
+                delete state.filters.assetType;
+                delete state.filters.contentType;
             } else {
                 state.discovery = id;
                 if (disc.preset) Object.assign(state.filters, disc.preset);
