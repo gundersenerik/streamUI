@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CORS Test - SVP API</title>
+    <style>
+        body { font-family: system-ui, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; }
+        .test { padding: 15px; margin: 10px 0; border-radius: 8px; }
+        .success { background: #d1fae5; border: 1px solid #10b981; }
+        .error { background: #fee2e2; border: 1px solid #ef4444; }
+        .pending { background: #fef3c7; border: 1px solid #f59e0b; }
+        pre { background: #f3f4f6; padding: 10px; border-radius: 4px; overflow-x: auto; font-size: 12px; }
+        h1 { color: #1f2937; }
+        .endpoint { font-family: monospace; color: #6366f1; }
+    </style>
+</head>
+<body>
+    <h1>🔍 SVP API CORS Test</h1>
+    <p>Testing if the SVP API allows cross-origin requests from your browser...</p>
+
+    <div id="results"></div>
+
+    <h2>How to use this test:</h2>
+    <ol>
+        <li>Serve this file via HTTP: <code>python3 -m http.server 8080</code></li>
+        <li>Open <code>http://localhost:8080/cors-test.html</code></li>
+        <li>Check the results above</li>
+    </ol>
+
+    <script>
+        const endpoints = [
+            {
+                name: 'VG Categories',
+                url: 'https://svp.vg.no/svp/api/v1/vgtv/categories?appName=edm_antichurn'
+            },
+            {
+                name: 'VG Search',
+                url: 'https://svp.vg.no/svp/api/v1/vgtv/search?appName=edm_antichurn&limit=3'
+            },
+            {
+                name: 'Aftonbladet Categories',
+                url: 'https://svp.vg.no/svp/api/v1/ab/categories?appName=braze_test'
+            }
+        ];
+
+        const resultsDiv = document.getElementById('results');
+
+        async function testEndpoint(endpoint) {
+            const div = document.createElement('div');
+            div.className = 'test pending';
+            div.innerHTML = `<strong>${endpoint.name}</strong><br><span class="endpoint">${endpoint.url}</span><br>Testing...`;
+            resultsDiv.appendChild(div);
+
+            try {
+                const startTime = Date.now();
+                const response = await fetch(endpoint.url);
+                const elapsed = Date.now() - startTime;
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                const itemCount = data._embedded?.categories?.length || data._embedded?.assets?.length || 0;
+
+                div.className = 'test success';
+                div.innerHTML = `
+                    <strong>✅ ${endpoint.name}</strong><br>
+                    <span class="endpoint">${endpoint.url}</span><br>
+                    <strong>Status:</strong> ${response.status} OK<br>
+                    <strong>Items returned:</strong> ${itemCount}<br>
+                    <strong>Response time:</strong> ${elapsed}ms<br>
+                    <strong>CORS:</strong> Working! 🎉
+                `;
+            } catch (error) {
+                div.className = 'test error';
+
+                let diagnosis = '';
+                if (error.message.includes('Failed to fetch') || error.name === 'TypeError') {
+                    diagnosis = `
+                        <br><br><strong>Diagnosis:</strong> This is likely a CORS error.
+                        The API server is not sending the required <code>Access-Control-Allow-Origin</code> header.
+                        <br><br><strong>Solutions:</strong>
+                        <ol>
+                            <li>Use a CORS proxy (for development only)</li>
+                            <li>Contact API provider to whitelist your domain</li>
+                            <li>Use server-side requests instead of browser fetch</li>
+                        </ol>
+                    `;
+                }
+
+                div.innerHTML = `
+                    <strong>❌ ${endpoint.name}</strong><br>
+                    <span class="endpoint">${endpoint.url}</span><br>
+                    <strong>Error:</strong> ${error.message}
+                    ${diagnosis}
+                `;
+            }
+        }
+
+        // Run tests sequentially
+        (async () => {
+            for (const endpoint of endpoints) {
+                await testEndpoint(endpoint);
+            }
+
+            // Summary
+            const successCount = document.querySelectorAll('.success').length;
+            const summary = document.createElement('div');
+            summary.style.marginTop = '20px';
+            summary.style.padding = '15px';
+            summary.style.borderRadius = '8px';
+
+            if (successCount === endpoints.length) {
+                summary.style.background = '#d1fae5';
+                summary.innerHTML = `<h3>✅ All tests passed!</h3><p>CORS is working. The SVP Content Builder app should function correctly.</p>`;
+            } else if (successCount === 0) {
+                summary.style.background = '#fee2e2';
+                summary.innerHTML = `<h3>❌ All tests failed</h3><p>CORS is blocking requests. The app cannot fetch data from the API in the browser.</p>`;
+            } else {
+                summary.style.background = '#fef3c7';
+                summary.innerHTML = `<h3>⚠️ Partial success</h3><p>${successCount}/${endpoints.length} endpoints working.</p>`;
+            }
+
+            resultsDiv.appendChild(summary);
+        })();
+    </script>
+</body>
+</html>
