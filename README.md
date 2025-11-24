@@ -85,7 +85,9 @@ Fill in the filters based on your needs:
 ### Step 4: Copy Connected Content
 The tool generates:
 ```liquid
+{% raw %}
 {% connected_content https://svp.vg.no/svp/api/v1/vgtv/search?... :save VGsports %}
+{% endraw %}
 ```
 Click "Copy to Clipboard" and paste into your Braze campaign.
 

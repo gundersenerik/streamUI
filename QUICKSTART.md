@@ -22,7 +22,9 @@ Simply open `index.html` in your web browser (Chrome, Firefox, Safari, or Edge).
 
 **Step 4** → Your Connected Content is auto-generated:
 ```liquid
+{% raw %}
 {% connected_content https://svp.vg.no/svp/api/v1/vgtv/search?appName=edm_antichurn&filter=streamType::live|...&limit=10 :save VGliveSports %}
+{% endraw %}
 ```
 
 **Step 5** → Choose a Liquid template:
@@ -48,11 +50,14 @@ Simply open `index.html` in your web browser (Chrome, Firefox, Safari, or Edge).
 
 **Generated Connected Content:**
 ```liquid
+{% raw %}
 {% connected_content https://svp.vg.no/svp/api/v1/vgtv/search?appName=edm_antichurn&filter=streamType::live|additional.metadata.sportType::football|flightTimes.start>=1699315200&limit=5&sort=-flightTimes.start&additional=tags|metadata :save VGsports %}
+{% endraw %}
 ```
 
 **Generated Liquid (Featured + List):**
 ```liquid
+{% raw %}
 <!-- Featured Match -->
 {% if VGsports._embedded.assets[0] %}
 <div style="border: 2px solid #0066cc; border-radius: 8px; padding: 20px;">
@@ -70,6 +75,7 @@ Simply open `index.html` in your web browser (Chrome, Firefox, Safari, or Edge).
   <p>{{item.flightTimes.start | date: '%b %d, %H:%M'}}</p>
 </div>
 {% endfor %}
+{% endraw %}
 ```
 
 ---
