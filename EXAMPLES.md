@@ -31,11 +31,12 @@ Easy date filtering without manual timestamp calculation:
 
 ### Generated Code:
 ```liquid
+{% raw %}
 {% connected_content https://svp.vg.no/svp/api/v1/ab/search?appName=braze_test&filter=streamType::live|flightTimes.start>=1731024000|flightTimes.start<=1731628800&limit=20&sort=flightTimes.start :save ABlive %}
 
 {% if ABlive._embedded.assets.size > 0 %}
   <h2>🔴 Live This Week ({{ABlive._embedded.assets.size}} events)</h2>
-  
+
   {% for item in ABlive._embedded.assets %}
   <div style="border-left: 4px solid #dd2a30; padding: 15px; margin: 10px 0;">
     <p style="color: #dd2a30; font-weight: bold;">
@@ -48,6 +49,7 @@ Easy date filtering without manual timestamp calculation:
 {% else %}
   <p>No live events scheduled</p>
 {% endif %}
+{% endraw %}
 ```
 
 ---
@@ -63,11 +65,12 @@ Easy date filtering without manual timestamp calculation:
 
 ### Generated Code:
 ```liquid
+{% raw %}
 {% connected_content https://svp.vg.no/svp/api/v1/vgtv/search?appName=edm_antichurn&filter=streamType::live|flightTimes.start>=1731024000|flightTimes.start<=1732233600&limit=15&sort=flightTimes.start&additional=tags|metadata :save VGsports %}
 
 {% if VGsports._embedded.assets.size > 0 %}
   <h2>⚽ Upcoming Matches - Next 2 Weeks</h2>
-  
+
   {% for match in VGsports._embedded.assets %}
   <div style="background: #f5f5f5; padding: 15px; margin: 10px 0; border-radius: 4px;">
     <div style="font-size: 12px; color: #666; margin-bottom: 5px;">
@@ -84,6 +87,7 @@ Easy date filtering without manual timestamp calculation:
 {% else %}
   <p>No matches scheduled</p>
 {% endif %}
+{% endraw %}
 ```
 
 ---
@@ -98,11 +102,12 @@ Easy date filtering without manual timestamp calculation:
 
 ### Generated Code:
 ```liquid
+{% raw %}
 {% connected_content https://svp.vg.no/svp/api/v1/ab/search?appName=braze_test&filter=streamType::live|flightTimes.start>=1731024000|flightTimes.start<=1731110399&limit=10&sort=flightTimes.start :save ABtoday %}
 
 {% if ABtoday._embedded.assets.size > 0 %}
   <h2>🔴 Live Today</h2>
-  
+
   {% for item in ABtoday._embedded.assets %}
   <div style="border: 1px solid #ddd; padding: 10px; margin: 5px 0;">
     <strong>{{ item.flightTimes.start | date: "%H:%M" }}</strong> - {{ item.title }}
@@ -111,6 +116,7 @@ Easy date filtering without manual timestamp calculation:
 {% else %}
   <p>Nothing live today</p>
 {% endif %}
+{% endraw %}
 ```
 
 ---
@@ -126,17 +132,19 @@ Easy date filtering without manual timestamp calculation:
 
 ### Generated Code:
 ```liquid
+{% raw %}
 {% connected_content https://svp.vg.no/svp/api/v1/vgtv/search?appName=edm_antichurn&filter=streamType::live|flightTimes.start>=1731110400|flightTimes.start<=1731196799|additional.metadata.sportType::football&limit=5&sort=flightTimes.start&additional=tags|metadata :save VGfootball %}
 
 {% if VGfootball._embedded.assets.size > 0 %}
   <h2>⚽ Tomorrow's Football</h2>
-  
+
   {% for match in VGfootball._embedded.assets %}
   <p><strong>{{ match.flightTimes.start | date: "%H:%M" }}</strong> {{ match.title }}</p>
   {% endfor %}
 {% else %}
   <p>No football tomorrow</p>
 {% endif %}
+{% endraw %}
 ```
 
 ---
