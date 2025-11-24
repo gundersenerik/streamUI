@@ -36,31 +36,51 @@ async function fetchCategories() {
 
 /**
  * Fetch podcast series from the API
+ * We derive podcast categories by fetching audio content and extracting unique categories
+ * This is more reliable than filtering the categories/series endpoint which doesn't filter properly
  * @returns {Promise<Array>} Array of series objects
  */
 async function fetchSeries() {
     const provider = AppState.getProviderConfig();
     if (!provider) return [];
-    
+
     // Check cache first
     const cached = AppState.getCachedSeries();
     if (cached.length > 0) {
         return cached;
     }
-    
+
     try {
-        const url = `${provider.baseUrl}/series?appName=${provider.appName}`;
+        // Fetch audio content and extract unique categories from it
+        // This is the only reliable way to get actual podcast categories
+        const url = `${provider.baseUrl}/search?appName=${provider.appName}&filter=assetType::audio&limit=200&additional=tags|metadata`;
         const response = await fetch(url);
         const data = await response.json();
-        
-        const series = data._embedded?.categories || data.categories || [];
+
+        const assets = data._embedded?.assets || [];
+
+        // Extract unique categories from audio content
+        const categoryMap = new Map();
+        for (const asset of assets) {
+            if (asset.category && asset.category.id && asset.category.title) {
+                categoryMap.set(asset.category.id, {
+                    id: asset.category.id,
+                    title: asset.category.title
+                });
+            }
+        }
+
+        // Convert to array and sort by title
+        const series = Array.from(categoryMap.values())
+            .sort((a, b) => a.title.localeCompare(b.title));
+
         AppState.setCachedSeries(series);
-        
-        console.log(`✅ Loaded ${series.length} series for ${provider.id}`);
+
+        console.log(`✅ Loaded ${series.length} podcast series for ${provider.id} (derived from audio content)`);
         return series;
-        
+
     } catch (error) {
-        console.error('❌ Failed to fetch series:', error);
+        console.error('❌ Failed to fetch podcast series:', error);
         return [];
     }
 }

@@ -104,7 +104,9 @@ const CONTENT_TYPES = {
         title: 'Podcasts',
         subtitle: 'Audio series and episodes',
         icon: '🎧',
-        baseFilter: 'streamType::audio',
+        baseFilter: 'assetType::audio',
+        // Note: Audio content has streamType='vod' but assetType='audio'
+        // We use assetType filter to differentiate podcasts from video
         discovery: [
             { id: 'latest', icon: '🆕', title: 'Latest Episodes', desc: 'Most recent', preset: {} },
             { id: 'week', icon: '📅', title: 'This Week', desc: 'Last 7 days', preset: { timeFilter: 'lastWeek' } },
@@ -149,10 +151,10 @@ const CONTENT_TYPES = {
             { id: 'everything', icon: '📚', title: 'All Content', desc: 'No filters', preset: {} },
             { id: 'live', icon: '📺', title: 'Live', desc: 'Currently streaming', preset: { streamType: 'live' } },
             { id: 'vod', icon: '🎬', title: 'Videos', desc: 'On demand', preset: { streamType: 'vod' } },
-            { id: 'audio', icon: '🎧', title: 'Audio', desc: 'Podcasts', preset: { streamType: 'audio' } }
+            { id: 'audio', icon: '🎧', title: 'Audio', desc: 'Podcasts', preset: { assetType: 'audio' } }
         ],
         filters: [
-            { id: 'streamType', label: 'Type', type: 'select', options: [
+            { id: 'contentType', label: 'Type', type: 'select', options: [
                 { value: '', label: 'All Types' },
                 { value: 'live', label: 'Live' },
                 { value: 'vod', label: 'Video' },
