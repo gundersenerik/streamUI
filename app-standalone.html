@@ -528,6 +528,7 @@ const CONTENT_TYPES = {
             { id: 'upcoming', icon: '📅', title: 'Starting Soon', desc: 'Next 3 hours', preset: { timeFilter: 'next3h' } }
         ],
         filters: [
+            { id: 'category', label: 'Category', type: 'dynamic', source: 'categories' },
             { id: 'limit', label: 'Results', type: 'number', default: 10 },
             { id: 'sort', label: 'Sort', type: 'select', options: [
                 { value: '-flightTimes.start', label: 'Newest First' },
@@ -543,11 +544,15 @@ const CONTENT_TYPES = {
             { id: 'today', icon: '📆', title: 'Today', desc: 'All events today', preset: { timeFilter: 'today' } }
         ],
         filters: [
+            { id: 'category', label: 'Category', type: 'dynamic', source: 'categories' },
             { id: 'sportType', label: 'Sport', type: 'select', options: [
                 { value: '', label: 'All Sports' },
                 { value: 'football', label: '⚽ Football' },
                 { value: 'hockey', label: '🏒 Hockey' },
-                { value: 'handball', label: '🤾 Handball' }
+                { value: 'handball', label: '🤾 Handball' },
+                { value: 'basketball', label: '🏀 Basketball' },
+                { value: 'tennis', label: '🎾 Tennis' },
+                { value: 'skiing', label: '⛷️ Skiing' }
             ]},
             { id: 'limit', label: 'Results', type: 'number', default: 15 }
         ]
@@ -561,6 +566,7 @@ const CONTENT_TYPES = {
             { id: 'month', icon: '🗓️', title: 'This Month', desc: 'Last 30 days', preset: { timeFilter: 'lastMonth' } }
         ],
         filters: [
+            { id: 'category', label: 'Podcast Series', type: 'dynamic', source: 'series' },
             { id: 'limit', label: 'Episodes', type: 'number', default: 10 },
             { id: 'sort', label: 'Sort', type: 'select', options: [
                 { value: '-published', label: 'Newest First' },
@@ -575,6 +581,7 @@ const CONTENT_TYPES = {
             { id: 'latest', icon: '🆕', title: 'Latest', desc: 'Most recent', preset: {} }
         ],
         filters: [
+            { id: 'category', label: 'Category', type: 'dynamic', source: 'categories' },
             { id: 'limit', label: 'Results', type: 'number', default: 10 },
             { id: 'sort', label: 'Sort', type: 'select', options: [
                 { value: '-published', label: 'Newest First' },
@@ -588,14 +595,17 @@ const CONTENT_TYPES = {
         discovery: [
             { id: 'everything', icon: '📚', title: 'All', desc: 'No filters', preset: {} },
             { id: 'live', icon: '📺', title: 'Live', desc: 'Streaming now', preset: { streamType: 'live' } },
-            { id: 'vod', icon: '🎬', title: 'Videos', desc: 'On demand', preset: { streamType: 'vod' } }
+            { id: 'vod', icon: '🎬', title: 'Videos', desc: 'On demand', preset: { streamType: 'vod' } },
+            { id: 'audio', icon: '🎧', title: 'Audio', desc: 'Podcasts', preset: { streamType: 'audio' } }
         ],
         filters: [
             { id: 'streamType', label: 'Type', type: 'select', options: [
                 { value: '', label: 'All Types' },
                 { value: 'live', label: 'Live' },
-                { value: 'vod', label: 'Video' }
+                { value: 'vod', label: 'Video' },
+                { value: 'audio', label: 'Audio' }
             ]},
+            { id: 'category', label: 'Category', type: 'dynamic', source: 'categories' },
             { id: 'limit', label: 'Results', type: 'number', default: 10 }
         ]
     }
@@ -620,7 +630,11 @@ const state = {
     contentType: 'live',
     filters: {},
     discovery: null,
-    selectedTemplate: null
+    selectedTemplate: null,
+    cache: {
+        categories: {},  // Keyed by provider
+        series: {}       // Keyed by provider
+    }
 };
 
 // ==================== HELPERS ====================
@@ -655,6 +669,85 @@ function getTimestamp(ref) {
     }
 }
 
+// ==================== API FUNCTIONS ====================
+async function fetchCategories() {
+    if (!state.provider) return [];
+
+    // Check cache
+    if (state.cache.categories[state.provider]) {
+        return state.cache.categories[state.provider];
+    }
+
+    const provider = PROVIDERS[state.provider];
+    try {
+        const url = `${provider.baseUrl}/categories?appName=${provider.appName}`;
+        console.log('Fetching categories:', url);
+        const response = await fetch(url);
+        const data = await response.json();
+
+        const categories = data._embedded?.categories || data.categories || [];
+        state.cache.categories[state.provider] = categories;
+        console.log(`Loaded ${categories.length} categories`);
+        return categories;
+    } catch (error) {
+        console.error('Failed to fetch categories:', error);
+        return [];
+    }
+}
+
+async function fetchSeries() {
+    if (!state.provider) return [];
+
+    // Check cache
+    if (state.cache.series[state.provider]) {
+        return state.cache.series[state.provider];
+    }
+
+    const provider = PROVIDERS[state.provider];
+    try {
+        const url = `${provider.baseUrl}/categories?appName=${provider.appName}&filter=additional.assetType::audio`;
+        console.log('Fetching series:', url);
+        const response = await fetch(url);
+        const data = await response.json();
+
+        const series = data._embedded?.categories || data.categories || [];
+        state.cache.series[state.provider] = series;
+        console.log(`Loaded ${series.length} series`);
+        return series;
+    } catch (error) {
+        console.error('Failed to fetch series:', error);
+        return [];
+    }
+}
+
+async function loadDynamicOptions() {
+    if (!state.provider) return;
+
+    const config = CONTENT_TYPES[state.contentType];
+
+    for (const filter of config.filters) {
+        if (filter.type !== 'dynamic') continue;
+
+        const select = document.querySelector(`[data-filter="${filter.id}"]`);
+        if (!select) continue;
+
+        select.innerHTML = '<option value="">Loading...</option>';
+
+        let options = [];
+        if (filter.source === 'categories') {
+            const categories = await fetchCategories();
+            options = categories.map(c => ({ value: c.id, label: c.title }));
+        } else if (filter.source === 'series') {
+            const series = await fetchSeries();
+            options = series.map(s => ({ value: s.id, label: s.title }));
+        }
+
+        const placeholder = filter.source === 'series' ? 'All Podcast Series' : 'All Categories';
+        select.innerHTML = `<option value="">${placeholder}</option>` +
+            options.map(o => `<option value="${o.value}">${o.label}</option>`).join('');
+    }
+}
+
 // ==================== URL GENERATION ====================
 function generateUrl() {
     if (!state.provider) return { encoded: '', readable: '' };
@@ -673,6 +766,11 @@ function generateUrl() {
 
     if (state.filters.sportType) {
         filterParts.push(`additional.metadata.sportType::${state.filters.sportType}`);
+    }
+
+    // Category filter
+    if (state.filters.category) {
+        filterParts.push(`category.id::${state.filters.category}`);
     }
 
     // Time filters
@@ -787,6 +885,10 @@ function renderFilters() {
             input = `<select data-filter="${f.id}">
                 ${f.options.map(o => `<option value="${o.value}" ${state.filters[f.id] === o.value ? 'selected' : ''}>${o.label}</option>`).join('')}
             </select>`;
+        } else if (f.type === 'dynamic') {
+            // Dynamic select - will be populated by loadDynamicOptions
+            const placeholder = state.provider ? 'Loading...' : 'Select provider first';
+            input = `<select data-filter="${f.id}"><option value="">${placeholder}</option></select>`;
         } else if (f.type === 'number') {
             input = `<input type="number" data-filter="${f.id}" value="${state.filters[f.id] || f.default || 10}" min="1" max="100">`;
         }
@@ -828,6 +930,11 @@ function renderAll() {
     renderDiscovery();
     renderFilters();
     updateOutputs();
+
+    // Load dynamic options if provider is selected
+    if (state.provider) {
+        loadDynamicOptions();
+    }
 }
 
 // ==================== PREVIEW ====================
@@ -886,6 +993,7 @@ document.addEventListener('DOMContentLoaded', () => {
         state.provider = e.target.value || null;
         if (state.provider) {
             $('variableName').value = PROVIDERS[state.provider].name + state.contentType.charAt(0).toUpperCase() + state.contentType.slice(1);
+            loadDynamicOptions();  // Load categories when provider is selected
         }
         updateOutputs();
     };
