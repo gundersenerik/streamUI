@@ -4,26 +4,17 @@
  */
 
 const AppState = {
-    // Selected provider configuration
-    provider: null,
-    
-    // Current content type (live, sports, podcasts, vod, all)
+    // Current selections
+    provider: '',
     contentType: 'live',
-    
-    // Selected discovery preset
     discovery: null,
-    
-    // User-selected filter values
     filters: {},
-    
-    // Currently selected liquid template
-    selectedTemplate: 'single-simple',
+    selectedTemplate: null,
     
     // Cached API data
     cache: {
-        categories: [],
-        sportTypes: [],
-        tags: []
+        categories: {},  // Keyed by provider
+        series: {}       // Keyed by provider
     },
     
     /**
@@ -38,46 +29,86 @@ const AppState = {
      * Get current content type configuration
      */
     getContentTypeConfig() {
-        return CONTENT_TYPES[this.contentType] || CONTENT_TYPES.live;
+        return CONTENT_TYPES[this.contentType];
     },
     
     /**
-     * Set provider by ID
+     * Get current provider configuration
+     */
+    getProviderConfig() {
+        return this.provider ? PROVIDERS[this.provider] : null;
+    },
+    
+    /**
+     * Set provider and clear cache
      */
     setProvider(providerId) {
-        this.provider = PROVIDERS[providerId] || null;
-        // Clear cache when provider changes
-        this.cache = {
-            categories: [],
-            sportTypes: [],
-            tags: []
-        };
+        this.provider = providerId;
+        // Don't clear cache - we want to keep it across provider switches
     },
     
     /**
-     * Set content type and reset related state
+     * Set content type and reset filters
      */
     setContentType(typeId) {
         this.contentType = typeId;
-        this.discovery = null;
-        this.filters = {};
+        this.resetFilters();
     },
     
     /**
-     * Update a single filter value
+     * Set a filter value
      */
-    setFilter(filterId, value) {
-        if (value === '' || value === null || value === undefined) {
-            delete this.filters[filterId];
+    setFilter(key, value) {
+        if (value) {
+            this.filters[key] = value;
         } else {
-            this.filters[filterId] = value;
+            delete this.filters[key];
         }
     },
     
     /**
-     * Get filter value with fallback to default
+     * Apply discovery preset
      */
-    getFilter(filterId, defaultValue = null) {
-        return this.filters[filterId] ?? defaultValue;
+    applyDiscoveryPreset(discoveryId) {
+        const config = this.getContentTypeConfig();
+        const discovery = config.discovery.find(d => d.id === discoveryId);
+        
+        if (this.discovery === discoveryId) {
+            // Toggle off
+            this.discovery = null;
+        } else {
+            this.discovery = discoveryId;
+            if (discovery && discovery.preset) {
+                Object.assign(this.filters, discovery.preset);
+            }
+        }
+    },
+    
+    /**
+     * Get cached categories for current provider
+     */
+    getCachedCategories() {
+        return this.cache.categories[this.provider] || [];
+    },
+    
+    /**
+     * Get cached series for current provider
+     */
+    getCachedSeries() {
+        return this.cache.series[this.provider] || [];
+    },
+    
+    /**
+     * Set cached categories for current provider
+     */
+    setCachedCategories(categories) {
+        this.cache.categories[this.provider] = categories;
+    },
+    
+    /**
+     * Set cached series for current provider
+     */
+    setCachedSeries(series) {
+        this.cache.series[this.provider] = series;
     }
 };

@@ -1,111 +1,138 @@
 /**
  * SVP Content Builder - Utilities
- * Helper functions used across the application
+ * Helper functions for common operations
  */
 
-const Utils = {
-    /**
-     * Debounce function to limit rapid calls
-     */
-    debounce(fn, delay) {
-        let timeout;
-        return function(...args) {
-            clearTimeout(timeout);
-            timeout = setTimeout(() => fn.apply(this, args), delay);
-        };
-    },
+/**
+ * Shorthand for getElementById
+ */
+const $ = (id) => document.getElementById(id);
+
+/**
+ * Shorthand for querySelectorAll
+ */
+const $$ = (selector) => document.querySelectorAll(selector);
+
+/**
+ * Show toast notification
+ * @param {string} message - Message to display
+ * @param {string} type - Toast type: '' | 'success' | 'error'
+ */
+function showToast(message, type = '') {
+    const toast = $('toast');
+    toast.textContent = message;
+    toast.className = 'toast show ' + type;
     
-    /**
-     * Copy text to clipboard
-     */
-    async copyToClipboard(text, button) {
-        try {
-            await navigator.clipboard.writeText(text);
-            
-            // Update button state
-            const originalContent = button.innerHTML;
-            button.classList.add('success');
-            button.innerHTML = `
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="20 6 9 17 4 12"></polyline>
-                </svg>
-                Copied!
-            `;
-            
-            UI.showToast('Copied to clipboard!');
-            
-            // Reset button after delay
-            setTimeout(() => {
-                button.classList.remove('success');
-                button.innerHTML = originalContent;
-            }, 2000);
-            
-            return true;
-        } catch (error) {
-            console.error('Failed to copy:', error);
-            UI.showToast('Failed to copy', 'error');
-            return false;
-        }
-    },
+    setTimeout(() => {
+        toast.classList.remove('show');
+    }, 3000);
+}
+
+/**
+ * Copy text to clipboard and update button state
+ * @param {string} type - Type of content to copy: 'connected' | 'url' | 'liquid'
+ * @param {HTMLElement} btn - The button element to update
+ */
+function copyToClipboard(type, btn) {
+    let text = '';
     
-    /**
-     * Get date string with offset
-     */
-    getDateString(daysOffset = 0) {
-        const date = new Date();
-        date.setDate(date.getDate() + daysOffset);
-        return date.toISOString().split('T')[0];
-    },
-    
-    /**
-     * Convert date to Unix timestamp
-     */
-    dateToTimestamp(dateString) {
-        return Math.floor(new Date(dateString).getTime() / 1000);
-    },
-    
-    /**
-     * Format timestamp to readable date
-     */
-    formatDate(timestamp) {
-        const date = new Date(timestamp * 1000);
-        return date.toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    },
-    
-    /**
-     * Escape HTML entities
-     */
-    escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    },
-    
-    /**
-     * Generate a simple unique ID
-     */
-    generateId() {
-        return Math.random().toString(36).substring(2, 9);
-    },
-    
-    /**
-     * Check if value is empty
-     */
-    isEmpty(value) {
-        return value === null || value === undefined || value === '';
-    },
-    
-    /**
-     * Truncate text with ellipsis
-     */
-    truncate(text, maxLength = 100) {
-        if (!text || text.length <= maxLength) return text;
-        return text.substring(0, maxLength).trim() + '...';
+    switch (type) {
+        case 'connected':
+            text = $('connectedOutput').textContent;
+            break;
+        case 'url':
+            text = $('urlOutput').textContent;
+            break;
+        case 'liquid':
+            text = $('liquidOutput').textContent;
+            break;
     }
-};
+    
+    navigator.clipboard.writeText(text).then(() => {
+        btn.classList.add('success');
+        btn.textContent = '✓ Copied!';
+        
+        setTimeout(() => {
+            btn.classList.remove('success');
+            btn.textContent = 'Copy';
+        }, 2000);
+    }).catch(err => {
+        console.error('Failed to copy:', err);
+        showToast('Failed to copy to clipboard', 'error');
+    });
+}
+
+/**
+ * Get Unix timestamp for various time references
+ * @param {string} timeRef - Time reference: 'now', 'endOfDay', etc.
+ * @returns {number} Unix timestamp in seconds
+ */
+function getTimestamp(timeRef) {
+    const now = Math.floor(Date.now() / 1000);
+    const day = 86400; // seconds in a day
+    
+    switch (timeRef) {
+        case 'now':
+            return now;
+        case 'endOfDay': {
+            const endOfDay = new Date();
+            endOfDay.setHours(23, 59, 59, 999);
+            return Math.floor(endOfDay.getTime() / 1000);
+        }
+        case '3h':
+            return now + 3 * 3600;
+        case '24h':
+            return now + day;
+        case '-24h':
+            return now - day;
+        case 'week':
+            return now + 7 * day;
+        case '-week':
+            return now - 7 * day;
+        case 'month':
+            return now + 30 * day;
+        case '-month':
+            return now - 30 * day;
+        default:
+            return now;
+    }
+}
+
+/**
+ * Format a Unix timestamp for display
+ * @param {number} timestamp - Unix timestamp in seconds
+ * @returns {string} Formatted date string
+ */
+function formatTimestamp(timestamp) {
+    if (!timestamp) return '';
+    return new Date(timestamp * 1000).toLocaleString();
+}
+
+/**
+ * Debounce function to limit rate of execution
+ * @param {Function} func - Function to debounce
+ * @param {number} wait - Wait time in milliseconds
+ * @returns {Function} Debounced function
+ */
+function debounce(func, wait = 300) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+/**
+ * Truncate text to specified length
+ * @param {string} text - Text to truncate
+ * @param {number} length - Maximum length
+ * @returns {string} Truncated text
+ */
+function truncate(text, length = 100) {
+    if (!text || text.length <= length) return text;
+    return text.substring(0, length) + '...';
+}

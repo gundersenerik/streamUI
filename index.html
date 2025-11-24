@@ -10,163 +10,119 @@
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
-    <div class="app">
-        <!-- Sidebar -->
-        <aside class="sidebar">
-            <div class="logo">
-                <div class="logo-icon">SB</div>
-                <div class="logo-text">
-                    SVP Builder
-                    <span>Braze Content Generator</span>
-                </div>
-            </div>
-            
-            <nav class="nav-section">
-                <div class="nav-label">Content Type</div>
-                <div class="nav-item active" data-type="live">
-                    <span class="nav-icon">📺</span>
-                    Live Content
-                </div>
-                <div class="nav-item" data-type="sports">
-                    <span class="nav-icon">⚽</span>
-                    Sports Events
-                </div>
-                <div class="nav-item" data-type="podcasts">
-                    <span class="nav-icon">🎧</span>
-                    Podcasts
-                </div>
-                <div class="nav-item" data-type="vod">
-                    <span class="nav-icon">🎬</span>
-                    Video on Demand
-                </div>
-                <div class="nav-item" data-type="all">
-                    <span class="nav-icon">📚</span>
-                    All Content
-                </div>
-            </nav>
-            
-            <div class="provider-selector">
-                <div class="provider-label">Provider</div>
-                <select class="provider-select" id="providerSelect">
-                    <option value="">Select provider...</option>
-                </select>
-            </div>
-        </aside>
-        
-        <!-- Main Content -->
-        <main class="main">
-            <header class="main-header">
-                <h1 class="main-title" id="mainTitle">Live Content</h1>
-                <p class="main-subtitle" id="mainSubtitle">Fetch currently live streams and broadcasts</p>
-            </header>
-            
-            <!-- Smart Discovery -->
-            <section class="discovery-section" id="discoverySection">
-                <div class="discovery-grid" id="discoveryGrid"></div>
-            </section>
-            
-            <!-- Filters -->
-            <section class="filter-section" id="filterSection">
-                <div class="filter-header">
-                    <h3 class="filter-title">Filters</h3>
-                    <span class="filter-reset" id="filterReset">Reset all</span>
-                </div>
-                <div class="filter-grid" id="filterGrid"></div>
-                <div class="quick-actions" id="quickActions"></div>
-            </section>
-            
-            <!-- Podcast Browser -->
-            <section class="podcast-browser hidden" id="podcastBrowser">
-                <div class="filter-header">
-                    <h3 class="filter-title">Browse Podcast Series</h3>
-                    <span class="filter-reset" id="clearPodcast">Clear selection</span>
-                </div>
-                <div class="podcast-grid" id="podcastGrid">
-                    <div class="loading">
-                        <div class="loading-spinner"></div>
-                        Loading podcasts...
-                    </div>
-                </div>
-            </section>
-        </main>
-        
-        <!-- Output Panel -->
-        <aside class="output-panel">
-            <div class="output-header">
-                <div class="output-title">Variable Name</div>
-                <input type="text" class="variable-input" id="variableName" value="content" placeholder="e.g., myContent">
-            </div>
-            
-            <div class="output-tabs">
-                <button class="output-tab active" data-tab="connected">Connected Content</button>
-                <button class="output-tab" data-tab="liquid">Liquid Templates</button>
-            </div>
-            
-            <div class="output-content">
-                <!-- Connected Content Tab -->
-                <div class="output-section active" id="connectedTab">
-                    <div class="code-container">
-                        <div class="code-label">
-                            <span class="code-label-text">Braze Code</span>
-                            <button class="copy-btn" data-copy="connected">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                                </svg>
-                                Copy
-                            </button>
-                        </div>
-                        <pre class="code-block" id="connectedOutput">{% connected_content ... :save content %}</pre>
-                    </div>
-                    
-                    <div class="code-container">
-                        <div class="code-label">
-                            <span class="code-label-text">Readable URL</span>
-                            <button class="copy-btn" data-copy="url">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                                </svg>
-                                Copy
-                            </button>
-                        </div>
-                        <pre class="code-block code-block--small" id="urlOutput">https://svp.vg.no/...</pre>
-                    </div>
-                </div>
-                
-                <!-- Liquid Templates Tab -->
-                <div class="output-section" id="liquidTab">
-                    <div class="template-list" id="templateList"></div>
-                    
-                    <div class="code-container" style="margin-top: 20px;">
-                        <div class="code-label">
-                            <span class="code-label-text">Liquid Code</span>
-                            <button class="copy-btn" data-copy="liquid">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                                </svg>
-                                Copy
-                            </button>
-                        </div>
-                        <pre class="code-block" id="liquidOutput">Select a template above...</pre>
-                    </div>
-                </div>
-            </div>
-        </aside>
-    </div>
-    
-    <!-- Toast Notification -->
-    <div class="toast" id="toast">Copied to clipboard!</div>
 
-    <!-- JavaScript Modules (order matters) -->
-    <script src="js/config.js"></script>
-    <script src="js/templates.js"></script>
-    <script src="js/state.js"></script>
-    <script src="js/api.js"></script>
-    <script src="js/ui.js"></script>
-    <script src="js/generator.js"></script>
-    <script src="js/utils.js"></script>
-    <script src="js/app.js"></script>
+<!-- GLOBAL HEADER WITH PROVIDER SELECTOR -->
+<header class="global-header">
+    <div class="header-left">
+        <div class="logo">
+            <div class="logo-icon">SB</div>
+            <div class="logo-text">SVP Builder<span>Braze Content Generator</span></div>
+        </div>
+    </div>
+    <div class="provider-box">
+        <label>📡 Provider</label>
+        <select class="provider-select" id="providerSelect">
+            <option value="">— Select Provider First —</option>
+        </select>
+    </div>
+</header>
+
+<!-- MAIN APP LAYOUT -->
+<div class="app-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="nav-label">Content Type</div>
+        <nav class="nav-section" id="navSection"></nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main">
+        <header class="main-header">
+            <h1 class="main-title" id="mainTitle">Live Content</h1>
+            <p class="main-subtitle" id="mainSubtitle">Fetch currently live streams and broadcasts</p>
+        </header>
+
+        <!-- Discovery Cards -->
+        <div class="discovery-grid" id="discoveryGrid"></div>
+
+        <!-- Filters -->
+        <section class="filter-section" id="filterSection">
+            <div class="filter-header">
+                <h3 class="filter-title">Filters</h3>
+                <span class="filter-reset" id="filterReset">Reset all</span>
+            </div>
+            <div class="filter-grid" id="filterGrid"></div>
+            <div class="quick-filters" id="quickFilters"></div>
+        </section>
+
+        <!-- PREVIEW PANEL -->
+        <section class="preview-section" id="previewSection">
+            <div class="preview-header">
+                <span class="preview-title">📋 Content Preview</span>
+                <button class="preview-btn" id="previewBtn">
+                    <span class="btn-text">Load Preview</span>
+                </button>
+            </div>
+            <div class="preview-results" id="previewResults">
+                <div class="preview-empty">
+                    <div class="preview-empty-icon">🔍</div>
+                    <div>Click "Load Preview" to see what content your query will return</div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Output Panel -->
+    <aside class="output-panel">
+        <div class="output-header">
+            <div class="output-title">Variable Name</div>
+            <input type="text" class="variable-input" id="variableName" value="content" placeholder="e.g., myContent">
+        </div>
+        <div class="output-tabs">
+            <button class="output-tab active" data-tab="connected">Connected Content</button>
+            <button class="output-tab" data-tab="liquid">Liquid Templates</button>
+        </div>
+        <div class="output-content">
+            <div class="output-section active" id="connectedTab">
+                <div class="code-container">
+                    <div class="code-label">
+                        <span class="code-label-text">Braze Code</span>
+                        <button class="copy-btn" data-copy="connected">Copy</button>
+                    </div>
+                    <pre class="code-block" id="connectedOutput">Select a provider to begin...</pre>
+                </div>
+                <div class="code-container">
+                    <div class="code-label">
+                        <span class="code-label-text">Readable URL (for testing)</span>
+                        <button class="copy-btn" data-copy="url">Copy</button>
+                    </div>
+                    <pre class="code-block" id="urlOutput">https://svp.vg.no/...</pre>
+                </div>
+            </div>
+            <div class="output-section" id="liquidTab">
+                <div class="template-list" id="templateList"></div>
+                <div class="code-container" style="margin-top: 16px;">
+                    <div class="code-label">
+                        <span class="code-label-text">Liquid Template Code</span>
+                        <button class="copy-btn" data-copy="liquid">Copy</button>
+                    </div>
+                    <pre class="code-block" id="liquidOutput">Select a template above...</pre>
+                </div>
+            </div>
+        </div>
+    </aside>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- JavaScript Modules (order matters) -->
+<script src="js/config.js"></script>
+<script src="js/state.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/generator.js"></script>
+<script src="js/api.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/preview.js"></script>
+<script src="js/app.js"></script>
 </body>
 </html>

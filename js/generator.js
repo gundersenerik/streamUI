@@ -1,170 +1,194 @@
 /**
- * SVP Content Builder - Generator Module
- * Handles URL building and code generation
+ * SVP Content Builder - URL Generator
+ * Builds API URLs and Connected Content code
  */
 
-const Generator = {
-    /**
-     * Generate all outputs (connected content, URL, liquid template)
-     */
-    generateOutput() {
-        if (!AppState.provider) {
-            UI.updateOutputs(
-                '{% connected_content [Select a provider first] :save content %}',
-                'Select a provider to generate URL',
-                'Select a template to generate code'
-            );
-            return;
-        }
-        
-        const config = AppState.getContentTypeConfig();
-        const varName = UI.elements.variableName.value || 'content';
-        
-        // Build the API URL
-        const { fullUrl, encodedUrl } = this.buildUrl(config);
-        
-        // Generate connected content
-        const connectedContent = `{% connected_content ${encodedUrl} :save ${varName} %}`;
-        
-        // Generate liquid template
-        const liquidCode = this.generateLiquid(varName);
-        
-        // Update UI
-        UI.updateOutputs(connectedContent, fullUrl, liquidCode);
-    },
-    
-    /**
-     * Build the API URL with all filters
-     */
-    buildUrl(config) {
-        const filters = [];
-        
-        // Add base filter for content type
-        if (config.filter) {
-            filters.push(config.filter);
-        }
-        
-        // Add discovery-based filters
-        this.addDiscoveryFilters(config, filters);
-        
-        // Add user-selected filters
-        this.addUserFilters(filters);
-        
-        // Build query params
-        const params = new URLSearchParams();
-        params.set('appName', AppState.provider.appName);
-        
-        if (filters.length > 0) {
-            params.set('filter', filters.join('|'));
-        }
-        
-        params.set('limit', AppState.getFilter('limit', 10));
-        params.set('additional', 'tags|metadata');
-        
-        // Add sort
-        const sort = AppState.getFilter('sort') || this.getDefaultSort(config);
-        if (sort) {
-            params.set('sort', sort);
-        }
-        
-        const baseUrl = `${AppState.provider.baseUrl}/search`;
-        const fullUrl = `${baseUrl}?${params.toString()}`;
-        const encodedUrl = fullUrl.replace(/&/g, '%26').replace(/\|/g, '%7C');
-        
-        return { fullUrl, encodedUrl };
-    },
-    
-    /**
-     * Add discovery preset filters
-     */
-    addDiscoveryFilters(config, filters) {
-        if (!AppState.discovery) return;
-        
-        const discoveryConfig = config.discovery.find(d => d.id === AppState.discovery);
-        if (!discoveryConfig || !discoveryConfig.filter) return;
-        
-        const now = Math.floor(Date.now() / 1000);
-        
-        // Handle time-based discovery filters
-        if (discoveryConfig.filter.includes('flightTimes.start>=')) {
-            filters.push(`flightTimes.start>=${now}`);
-            
-            // Add end time bounds
-            if (AppState.discovery === 'upcoming') {
-                filters.push(`flightTimes.start<=${now + (3 * 60 * 60)}`);
-            } else if (AppState.discovery === 'today') {
-                const endOfDay = new Date();
-                endOfDay.setHours(23, 59, 59, 999);
-                filters.push(`flightTimes.start<=${Math.floor(endOfDay.getTime() / 1000)}`);
-            } else if (AppState.discovery === 'week') {
-                filters.push(`flightTimes.start<=${now + (7 * 24 * 60 * 60)}`);
-            } else if (AppState.discovery === 'month') {
-                filters.push(`flightTimes.start<=${now + (30 * 24 * 60 * 60)}`);
-            }
-        } else if (discoveryConfig.filter.includes('flightTimes.end>=')) {
-            // Recently ended (last 24 hours)
-            filters.push(`flightTimes.end>=${now - (24 * 60 * 60)}`);
-        } else if (discoveryConfig.filter.includes('streamType::')) {
-            // Direct stream type filter
-            filters.push(discoveryConfig.filter);
-        }
-    },
-    
-    /**
-     * Add user-selected filters
-     */
-    addUserFilters(filters) {
-        const userFilters = AppState.filters;
-        
-        if (userFilters.category) {
-            filters.push(`categories.id::${userFilters.category}`);
-        }
-        
-        if (userFilters.sportType) {
-            filters.push(`additional.metadata.sportType::${userFilters.sportType}`);
-        }
-        
-        if (userFilters.access) {
-            filters.push(`additional.access::${userFilters.access}`);
-        }
-        
-        if (userFilters.streamType) {
-            filters.push(`streamType::${userFilters.streamType}`);
-        }
-        
-        if (userFilters.dateStart) {
-            const timestamp = Math.floor(new Date(userFilters.dateStart).getTime() / 1000);
-            filters.push(`published>=${timestamp}`);
-        }
-    },
-    
-    /**
-     * Get default sort for content type
-     */
-    getDefaultSort(config) {
-        const sortFilter = config.filters.find(f => f.id === 'sort');
-        return sortFilter?.default || '-published';
-    },
-    
-    /**
-     * Generate liquid template code
-     */
-    generateLiquid(varName) {
-        const template = TEMPLATES.find(t => t.id === AppState.selectedTemplate);
-        
-        if (template) {
-            return template.code(varName);
-        }
-        
-        return 'Select a template above...';
-    },
-    
-    /**
-     * Generate a simple test URL (for debugging)
-     */
-    generateTestUrl() {
-        if (!AppState.provider) return null;
-        
-        return `${AppState.provider.baseUrl}/search?appName=${AppState.provider.appName}&limit=5`;
+/**
+ * Generate API URL based on current state
+ * @returns {Object} Object with encoded and readable URL versions
+ */
+function generateUrl() {
+    const provider = AppState.getProviderConfig();
+    if (!provider) {
+        return { encoded: '', readable: '' };
     }
-};
+    
+    const config = AppState.getContentTypeConfig();
+    const filters = AppState.filters;
+    
+    // Build filter parts array
+    const filterParts = [];
+    
+    // Base filter from content type (e.g., streamType::live)
+    if (config.baseFilter) {
+        filterParts.push(config.baseFilter);
+    }
+    
+    // Override streamType if explicitly set
+    if (filters.streamType) {
+        // Remove existing streamType filter
+        const idx = filterParts.findIndex(f => f.startsWith('streamType'));
+        if (idx > -1) filterParts.splice(idx, 1);
+        filterParts.push(`streamType::${filters.streamType}`);
+    }
+    
+    // Category filter
+    if (filters.category) {
+        filterParts.push(`category.id::${filters.category}`);
+    }
+    
+    // Sport type filter
+    if (filters.sportType) {
+        filterParts.push(`additional.metadata.sportType::${filters.sportType}`);
+    }
+    
+    // Access level filter
+    if (filters.access) {
+        filterParts.push(`access.${filters.access}::true`);
+    }
+    
+    // Time-based filters
+    addTimeFilters(filterParts, filters.timeFilter);
+    
+    // Build URL parameters
+    const params = new URLSearchParams();
+    params.set('appName', provider.appName);
+    
+    if (filterParts.length > 0) {
+        params.set('filter', filterParts.join('|'));
+    }
+    
+    params.set('limit', filters.limit || '10');
+    
+    if (filters.sort) {
+        params.set('sort', filters.sort);
+    }
+    
+    // Always request additional data for richer content
+    params.set('additional', 'tags|metadata');
+    
+    // Build URLs
+    const readable = `${provider.baseUrl}/search?${params.toString()}`;
+    
+    // Encode for Braze connected content
+    const encoded = readable
+        .replace(/&/g, '%26')
+        .replace(/\|/g, '%7C');
+    
+    return { encoded, readable };
+}
+
+/**
+ * Add time-based filters to filter array
+ * @param {Array} filterParts - Array of filter strings
+ * @param {string} timeFilter - Time filter preset name
+ */
+function addTimeFilters(filterParts, timeFilter) {
+    if (!timeFilter) return;
+    
+    const now = getTimestamp('now');
+    
+    switch (timeFilter) {
+        case 'next3h':
+            filterParts.push(`flightTimes.start>=${now}`);
+            filterParts.push(`flightTimes.start<=${getTimestamp('3h')}`);
+            break;
+            
+        case 'today':
+            filterParts.push(`flightTimes.start>=${now}`);
+            filterParts.push(`flightTimes.start<=${getTimestamp('endOfDay')}`);
+            break;
+            
+        case 'week':
+            filterParts.push(`flightTimes.start>=${now}`);
+            filterParts.push(`flightTimes.start<=${getTimestamp('week')}`);
+            break;
+            
+        case 'month':
+            filterParts.push(`flightTimes.start>=${now}`);
+            filterParts.push(`flightTimes.start<=${getTimestamp('month')}`);
+            break;
+            
+        case 'ended24h':
+            filterParts.push(`flightTimes.end>=${getTimestamp('-24h')}`);
+            break;
+            
+        case 'last24h':
+            filterParts.push(`published>=${getTimestamp('-24h')}`);
+            break;
+            
+        case 'lastWeek':
+            filterParts.push(`published>=${getTimestamp('-week')}`);
+            break;
+            
+        case 'lastMonth':
+            filterParts.push(`published>=${getTimestamp('-month')}`);
+            break;
+    }
+}
+
+/**
+ * Generate the full Connected Content code
+ * @returns {string} Braze connected content code
+ */
+function generateConnectedContent() {
+    const urls = generateUrl();
+    const varName = $('variableName').value || 'content';
+    
+    if (!urls.encoded) {
+        return 'Select a provider to begin...';
+    }
+    
+    return `{% connected_content ${urls.encoded} :save ${varName} %}`;
+}
+
+/**
+ * Generate Liquid template code for selected template
+ * @returns {string} Liquid template code
+ */
+function generateLiquidCode() {
+    if (!AppState.selectedTemplate) {
+        return 'Select a template above...';
+    }
+    
+    const template = TEMPLATES.find(t => t.id === AppState.selectedTemplate);
+    if (!template) {
+        return 'Template not found';
+    }
+    
+    const varName = $('variableName').value || 'content';
+    return template.code(varName);
+}
+
+/**
+ * Update all output displays
+ */
+function updateOutputs() {
+    const urls = generateUrl();
+    
+    $('connectedOutput').textContent = generateConnectedContent();
+    $('urlOutput').textContent = urls.readable || 'https://svp.vg.no/...';
+    
+    updateLiquidOutput();
+}
+
+/**
+ * Update just the Liquid output
+ */
+function updateLiquidOutput() {
+    $('liquidOutput').textContent = generateLiquidCode();
+}
+
+/**
+ * Generate suggested variable name based on provider and content type
+ * @returns {string} Suggested variable name
+ */
+function generateVariableName() {
+    const provider = AppState.getProviderConfig();
+    const contentType = AppState.contentType;
+    
+    if (!provider) return 'content';
+    
+    const prefix = provider.shortName || provider.id.toUpperCase();
+    return `${prefix}${contentType}`;
+}
