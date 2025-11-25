@@ -18,15 +18,19 @@ function renderNavigation() {
     
     // Add click handlers
     navSection.querySelectorAll('.nav-item').forEach(item => {
-        item.addEventListener('click', () => {
+        item.addEventListener('click', async () => {
             navSection.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
             item.classList.add('active');
-            
+
             AppState.setContentType(item.dataset.type);
             renderContentType();
-            loadDynamicOptions();
-            updateOutputs();
             clearPreview();
+
+            // Load dynamic options - MUST await to prevent race conditions
+            await loadDynamicOptions();
+
+            // Update outputs AFTER dynamic options are loaded
+            updateOutputs();
         });
     });
 }

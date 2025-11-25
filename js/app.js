@@ -51,25 +51,25 @@ function setupEventListeners() {
  * Handle provider selection change
  * @param {Event} e - Change event
  */
-function handleProviderChange(e) {
+async function handleProviderChange(e) {
     const providerId = e.target.value;
-    
+
     AppState.setProvider(providerId);
-    
-    // Load dynamic options for current content type
-    loadDynamicOptions();
-    
+
+    // Clear preview since data will be different
+    clearPreview();
+
     // Update suggested variable name
     if (providerId) {
         $('variableName').value = generateVariableName();
     }
-    
-    // Update outputs
+
+    // Load dynamic options for current content type - MUST await to prevent race conditions
+    await loadDynamicOptions();
+
+    // Update outputs AFTER dynamic options are loaded
     updateOutputs();
-    
-    // Clear preview since data will be different
-    clearPreview();
-    
+
     console.log(`📡 Provider changed to: ${providerId || 'none'}`);
 }
 

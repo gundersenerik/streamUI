@@ -40,11 +40,30 @@ const AppState = {
     },
     
     /**
-     * Set provider and clear cache
+     * Set provider and reset filters
      */
     setProvider(providerId) {
         this.provider = providerId;
-        // Don't clear cache - we want to keep it across provider switches
+        // Reset filters when provider changes to avoid stale filter values
+        this.resetFilters();
+    },
+
+    /**
+     * Clear cache for current provider (useful when data might be stale)
+     */
+    clearCacheForProvider() {
+        if (this.provider) {
+            delete this.cache.categories[this.provider];
+            delete this.cache.series[this.provider];
+        }
+    },
+
+    /**
+     * Clear all cached data
+     */
+    clearAllCache() {
+        this.cache.categories = {};
+        this.cache.series = {};
     },
     
     /**
