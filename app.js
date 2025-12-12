@@ -243,7 +243,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Reset filters first
         podcastContentType.value = '';
         podcastAccess.value = '';
-        podcastSort.value = '-published';
+        podcastSort.value = 'published';
         
         switch(preset) {
             case 'episodes':
@@ -599,7 +599,7 @@ document.addEventListener('DOMContentLoaded', function() {
     resetFilters.addEventListener('click', function() {
         filterCategory.value = '';
         filterLimit.value = 10;
-        filterSort.value = '-published';
+        filterSort.value = 'published';
         document.querySelectorAll('.quick-tag').forEach(function(tag) {
             tag.classList.remove('active');
         });
@@ -611,7 +611,7 @@ document.addEventListener('DOMContentLoaded', function() {
         podcastContentType.value = '';
         podcastAccess.value = '';
         podcastLimit.value = 10;
-        podcastSort.value = '-published';
+        podcastSort.value = 'published';
         selectedSeriesId = null;
         selectedSeriesTitle = null;
         
