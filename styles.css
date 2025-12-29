@@ -151,6 +151,21 @@ body {
     background: #EFF6FF;
 }
 
+.preset-card.featured {
+    border-color: #10B981;
+    background: linear-gradient(135deg, #ECFDF5 0%, #FFFFFF 100%);
+}
+
+.preset-card.featured:hover {
+    border-color: #059669;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+}
+
+.preset-card.featured.active {
+    border-color: #059669;
+    background: #ECFDF5;
+}
+
 .preset-icon {
     font-size: 24px;
     margin-bottom: 8px;
@@ -165,6 +180,17 @@ body {
 .preset-desc {
     font-size: 12px;
     color: #64748B;
+}
+
+.preset-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    background: #10B981;
+    color: white;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: 600;
+    margin-top: 8px;
 }
 
 /* FILTERS */
@@ -211,6 +237,72 @@ body {
 
 .reset-btn:hover {
     text-decoration: underline;
+}
+
+/* MODE TOGGLE */
+.mode-toggle {
+    display: flex;
+    gap: 8px;
+    padding: 4px;
+    background: #F3E8FF;
+    border-radius: 10px;
+    margin-bottom: 16px;
+}
+
+.mode-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 16px;
+    border: none;
+    background: transparent;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #7C3AED;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.mode-btn:hover {
+    background: rgba(255,255,255,0.5);
+}
+
+.mode-btn.active {
+    background: white;
+    color: #7C3AED;
+    box-shadow: 0 2px 8px rgba(124, 58, 237, 0.15);
+}
+
+.mode-icon {
+    font-size: 18px;
+}
+
+/* MODE INFO */
+.mode-info {
+    display: flex;
+    gap: 12px;
+    padding: 14px 16px;
+    background: #EDE9FE;
+    border-radius: 8px;
+    margin-bottom: 16px;
+}
+
+.mode-info-icon {
+    font-size: 20px;
+    flex-shrink: 0;
+}
+
+.mode-info-text {
+    font-size: 13px;
+    color: #5B21B6;
+    line-height: 1.5;
+}
+
+.mode-info-text strong {
+    color: #4C1D95;
 }
 
 .filters-grid {
@@ -297,7 +389,7 @@ body {
 }
 
 .series-list {
-    max-height: 200px;
+    max-height: 240px;
     overflow-y: auto;
     border: 1px solid #E9D5FF;
     border-radius: 8px;
@@ -333,10 +425,12 @@ body {
     background: #EDE9FE;
 }
 
-.series-item input[type="radio"] {
-    width: 16px;
-    height: 16px;
+.series-item input[type="radio"],
+.series-item input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
     accent-color: #7C3AED;
+    flex-shrink: 0;
 }
 
 .series-info {
@@ -355,6 +449,21 @@ body {
 .series-meta {
     font-size: 12px;
     color: #64748B;
+}
+
+.series-selected-count {
+    margin-top: 12px;
+    padding: 10px 14px;
+    background: #7C3AED;
+    color: white;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    text-align: center;
+}
+
+.series-selected-count.hidden {
+    display: none;
 }
 
 /* QUICK TAGS */
@@ -553,6 +662,31 @@ body {
     color: #7C3AED;
 }
 
+/* Preview Group Header (for digest mode) */
+.preview-group {
+    margin-bottom: 20px;
+}
+
+.preview-group-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    background: #F3E8FF;
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
+
+.preview-group-icon {
+    font-size: 16px;
+}
+
+.preview-group-title {
+    font-weight: 600;
+    font-size: 14px;
+    color: #7C3AED;
+}
+
 /* RIGHT SIDEBAR */
 .sidebar-right {
     background: white;
@@ -628,6 +762,13 @@ body {
     outline: none;
     border-color: #3B82F6;
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.variable-hint {
+    display: block;
+    margin-top: 6px;
+    font-size: 11px;
+    color: #94A3B8;
 }
 
 /* OUTPUT TABS */
@@ -760,15 +901,42 @@ body {
     background: #EFF6FF;
 }
 
+.template-item.recommended {
+    border-color: #10B981;
+    background: linear-gradient(135deg, #ECFDF5 0%, #FFFFFF 100%);
+}
+
+.template-item.recommended:hover {
+    border-color: #059669;
+}
+
+.template-item.recommended.active {
+    border-color: #059669;
+    background: #ECFDF5;
+}
+
 .template-item .template-title {
     font-weight: 500;
     font-size: 14px;
     margin-bottom: 2px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .template-item .template-desc {
     font-size: 12px;
     color: #64748B;
+}
+
+.template-recommended-badge {
+    display: inline-block;
+    padding: 2px 6px;
+    background: #10B981;
+    color: white;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 600;
 }
 
 /* TOAST */
