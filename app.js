@@ -1,58 +1,88 @@
-// SVP Builder v5 - With Digest Mode & Multi-Select
+// SVP Builder v6 - Complete UX Overhaul
+// Features: Auto-preview, Auto-load series, Dynamic Island, Tooltips, Modal
+
 document.addEventListener('DOMContentLoaded', function() {
     
-    console.log('SVP Builder v5 loaded');
+    console.log('SVP Builder v6 loading...');
     
     // ============================================
     // ELEMENT REFERENCES
     // ============================================
     
+    // Dynamic Island
+    var dynamicIsland = document.getElementById('dynamic-island');
+    var islandText = document.getElementById('island-text');
+    var islandDot = dynamicIsland.querySelector('.island-dot');
+    
+    // Welcome & Builder
+    var welcomeState = document.getElementById('welcome-state');
+    var builderContent = document.getElementById('builder-content');
+    var providerBtns = document.querySelectorAll('.provider-btn');
+    
+    // Navigation
     var navItems = document.querySelectorAll('.nav-item');
     var contentTitle = document.getElementById('content-title');
     var contentDescription = document.getElementById('content-description');
     var presetCardsContainer = document.getElementById('preset-cards');
     var quickTags = document.getElementById('quick-tags');
-    var outputTabs = document.querySelectorAll('.output-tab');
-    var panelConnected = document.getElementById('panel-connected');
-    var panelLiquid = document.getElementById('panel-liquid');
-    var templateList = document.getElementById('template-list');
+    
+    // Config
     var providerSelect = document.getElementById('provider-select');
     var variableInput = document.getElementById('variable-name');
-    var variableHint = document.getElementById('variable-hint');
-    var brazeCode = document.getElementById('braze-code');
-    var readableUrl = document.getElementById('readable-url');
-    var liquidCode = document.getElementById('liquid-code');
-    var toast = document.getElementById('toast');
-    var resetFilters = document.getElementById('reset-filters');
     
-    // General filters
+    // Filters - General
+    var generalFilters = document.getElementById('general-filters');
     var filterCategory = document.getElementById('filter-category');
     var filterLimit = document.getElementById('filter-limit');
     var filterSort = document.getElementById('filter-sort');
+    var resetFilters = document.getElementById('reset-filters');
     
-    // Podcast filters
-    var generalFilters = document.getElementById('general-filters');
+    // Filters - Podcast
     var podcastFilters = document.getElementById('podcast-filters');
     var podcastContentType = document.getElementById('podcast-content-type');
     var podcastAccess = document.getElementById('podcast-access');
     var podcastLimit = document.getElementById('podcast-limit');
     var podcastSort = document.getElementById('podcast-sort');
     var podcastDateFilter = document.getElementById('podcast-date-filter');
-    var fetchSeriesBtn = document.getElementById('fetch-series');
+    var resetPodcastFilters = document.getElementById('reset-podcast-filters');
     var seriesList = document.getElementById('series-list');
     var seriesLabel = document.getElementById('series-label');
+    var seriesSearch = document.getElementById('series-search');
     var seriesSelectedCount = document.getElementById('series-selected-count');
     var selectedCountText = document.getElementById('selected-count-text');
-    var resetPodcastFilters = document.getElementById('reset-podcast-filters');
     var modeInfo = document.getElementById('mode-info');
-    
-    // Mode toggle
     var modeBtns = document.querySelectorAll('.mode-btn');
     
     // Preview
-    var loadPreviewBtn = document.getElementById('load-preview');
     var previewContent = document.getElementById('preview-content');
     var previewCount = document.getElementById('preview-count');
+    var previewStatus = document.getElementById('preview-status');
+    
+    // Output
+    var templateList = document.getElementById('template-list');
+    var connectedSubtitle = document.getElementById('connected-subtitle');
+    var liquidSubtitle = document.getElementById('liquid-subtitle');
+    
+    // Buttons
+    var copyConnectedBtn = document.getElementById('copy-connected');
+    var viewConnectedBtn = document.getElementById('view-connected');
+    var copyLiquidBtn = document.getElementById('copy-liquid');
+    var viewLiquidBtn = document.getElementById('view-liquid');
+    var copyAllBtn = document.getElementById('copy-all');
+    var viewAllBtn = document.getElementById('view-all');
+    
+    // Modal
+    var modalOverlay = document.getElementById('code-modal');
+    var modalTitle = document.getElementById('modal-title');
+    var modalCode = document.getElementById('modal-code');
+    var modalCodeLabel = document.getElementById('modal-code-label');
+    var modalCopyBtn = document.getElementById('modal-copy');
+    var modalCloseBtn = document.getElementById('modal-close');
+    var modalTabs = document.querySelectorAll('.modal-tab');
+    
+    // Tooltip
+    var tooltip = document.getElementById('tooltip');
+    var toast = document.getElementById('toast');
     
     // ============================================
     // CONTENT TYPE CONFIGURATIONS
@@ -190,17 +220,163 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     
     // ============================================
+    // PROVIDER NAMES
+    // ============================================
+    
+    var providerNames = {
+        'vgtv': 'VG/VGTV',
+        'ap': 'Aftenposten',
+        'bt': 'Bergens Tidende',
+        'aftenbladet': 'Stavanger Aftenblad',
+        'e24': 'E24',
+        'ab': 'Aftonbladet',
+        'svd': 'Svenska Dagbladet',
+        'podme': 'Podme'
+    };
+    
+    // ============================================
     // CURRENT STATE
     // ============================================
     
     var currentContentType = 'live';
-    var currentMode = 'single'; // 'single' or 'digest'
+    var currentMode = 'single';
     var currentTemplate = null;
-    var selectedSeries = []; // Array for multi-select in digest mode
-    var seriesData = []; // Cached series data
+    var selectedSeries = [];
+    var seriesData = [];
+    var generatedConnectedContent = '';
+    var generatedLiquidCode = '';
+    var previewDebounceTimer = null;
+    var isProviderSelected = false;
     
     // ============================================
-    // NAVIGATION HANDLING
+    // DYNAMIC ISLAND
+    // ============================================
+    
+    function updateIsland() {
+        var provider = providerSelect.value;
+        
+        if (!provider) {
+            islandText.textContent = 'Select a provider to begin';
+            islandDot.className = 'island-dot';
+            dynamicIsland.classList.remove('expanded');
+            return;
+        }
+        
+        var providerName = providerNames[provider] || provider;
+        var contentType = contentTypes[currentContentType];
+        var parts = [];
+        
+        parts.push('📡 ' + providerName);
+        parts.push(contentType.title);
+        
+        if (currentContentType === 'podcasts') {
+            if (currentMode === 'digest') {
+                parts.push('Digest Mode');
+                if (selectedSeries.length > 0) {
+                    parts.push(selectedSeries.length + ' selected');
+                }
+            } else if (selectedSeries.length > 0) {
+                parts.push(selectedSeries[0].title);
+            }
+        }
+        
+        islandText.textContent = parts.join('  •  ');
+        islandDot.className = 'island-dot active';
+        dynamicIsland.classList.add('expanded');
+    }
+    
+    function setIslandLoading(loading) {
+        if (loading) {
+            islandDot.className = 'island-dot loading';
+        } else {
+            islandDot.className = 'island-dot active';
+        }
+    }
+    
+    // ============================================
+    // WELCOME STATE & PROVIDER SELECTION
+    // ============================================
+    
+    function showBuilder() {
+        welcomeState.classList.add('hidden');
+        builderContent.classList.remove('hidden');
+        isProviderSelected = true;
+        updateIsland();
+        triggerAutoPreview();
+    }
+    
+    // Welcome screen provider buttons
+    providerBtns.forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var provider = this.dataset.provider;
+            
+            if (provider === 'more') {
+                // Show all providers modal or expand
+                showBuilder();
+                providerSelect.focus();
+                return;
+            }
+            
+            providerSelect.value = provider;
+            showBuilder();
+            loadSeriesForProvider(provider);
+        });
+    });
+    
+    // Main provider dropdown
+    providerSelect.addEventListener('change', function() {
+        var provider = this.value;
+        
+        if (provider && !isProviderSelected) {
+            showBuilder();
+        }
+        
+        if (provider) {
+            loadSeriesForProvider(provider);
+        } else {
+            seriesData = [];
+            selectedSeries = [];
+            renderSeriesList([]);
+        }
+        
+        updateIsland();
+        updateGeneratedCode();
+        triggerAutoPreview();
+    });
+    
+    // ============================================
+    // AUTO-LOAD SERIES
+    // ============================================
+    
+    function loadSeriesForProvider(provider) {
+        if (!provider) return;
+        
+        // Show loading state
+        seriesList.innerHTML = '<div class="series-loading"><div class="loading-spinner"></div><p>Loading podcasts...</p></div>';
+        
+        var url = 'https://svp.vg.no/svp/api/v1/' + provider + '/categories?appName=braze_content&limit=100&filter=isSeries::true';
+        
+        fetch(url)
+            .then(function(response) {
+                if (!response.ok) throw new Error('Failed to fetch');
+                return response.json();
+            })
+            .then(function(data) {
+                seriesData = data._embedded ? data._embedded.categories : [];
+                renderSeriesList(seriesData);
+                
+                if (seriesData.length > 0) {
+                    showToast('Loaded ' + seriesData.length + ' podcast series');
+                }
+            })
+            .catch(function(error) {
+                console.error('Error fetching series:', error);
+                seriesList.innerHTML = '<div class="series-empty"><p>Could not load series. Check provider and try again.</p></div>';
+            });
+    }
+    
+    // ============================================
+    // NAVIGATION
     // ============================================
     
     navItems.forEach(function(item) {
@@ -223,6 +399,11 @@ document.addEventListener('DOMContentLoaded', function() {
             if (type === 'podcasts') {
                 generalFilters.classList.add('hidden');
                 podcastFilters.classList.remove('hidden');
+                
+                // Auto-load series if provider is selected
+                if (providerSelect.value) {
+                    loadSeriesForProvider(providerSelect.value);
+                }
             } else {
                 generalFilters.classList.remove('hidden');
                 podcastFilters.classList.add('hidden');
@@ -238,9 +419,10 @@ document.addEventListener('DOMContentLoaded', function() {
             selectedSeries = [];
             currentMode = 'single';
             updateModeUI();
-            clearPreview();
+            updateIsland();
             updateGeneratedCode();
             renderTemplateList();
+            triggerAutoPreview();
         });
     });
     
@@ -255,8 +437,10 @@ document.addEventListener('DOMContentLoaded', function() {
             
             currentMode = this.dataset.mode;
             updateModeUI();
+            updateIsland();
             updateGeneratedCode();
             renderTemplateList();
+            triggerAutoPreview();
         });
     });
     
@@ -265,13 +449,11 @@ document.addEventListener('DOMContentLoaded', function() {
             modeInfo.innerHTML = '<div class="mode-info-icon">📰</div><div class="mode-info-text"><strong>Digest Mode:</strong> Select multiple podcasts to create a "released this week" roundup. Each podcast gets its own API call.</div>';
             seriesLabel.textContent = 'SELECT PODCASTS (Multi-select)';
             podcastLimit.value = 1;
-            variableHint.textContent = 'In digest mode, variables are auto-named: podcast_1, podcast_2, etc.';
             seriesSelectedCount.classList.remove('hidden');
             updateSelectedCount();
         } else {
             modeInfo.innerHTML = '<div class="mode-info-icon">💡</div><div class="mode-info-text"><strong>Single Podcast Mode:</strong> Fetch episodes from one podcast. Perfect for automated "new episode" emails.</div>';
             seriesLabel.textContent = 'SELECT PODCAST SERIES';
-            variableHint.textContent = '';
             seriesSelectedCount.classList.add('hidden');
         }
         
@@ -315,7 +497,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 var preset = this.dataset.preset;
                 applyPreset(preset);
-                updateGeneratedCode();
             });
         });
     }
@@ -331,21 +512,19 @@ document.addEventListener('DOMContentLoaded', function() {
         
         switch(preset) {
             case 'latest-single':
-                // Latest Episode - for automated single podcast emails
                 currentMode = 'single';
                 podcastLimit.value = 1;
                 podcastSort.value = '-published';
                 updateModeToggle('single');
-                showToast('Set to fetch 1 latest episode - perfect for scheduled sends!');
+                showToast('Set to fetch 1 latest episode');
                 break;
                 
             case 'weekly-digest':
-                // Weekly Digest - multi-select mode
                 currentMode = 'digest';
                 podcastLimit.value = 1;
                 podcastDateFilter.value = '7';
                 updateModeToggle('digest');
-                showToast('Digest mode enabled - select multiple podcasts below');
+                showToast('Digest mode - select podcasts below');
                 break;
                 
             case 'episodes':
@@ -358,7 +537,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         updateModeUI();
+        updateIsland();
         renderTemplateList();
+        updateGeneratedCode();
+        triggerAutoPreview();
     }
     
     function updateModeToggle(mode) {
@@ -366,6 +548,99 @@ document.addEventListener('DOMContentLoaded', function() {
             btn.classList.toggle('active', btn.dataset.mode === mode);
         });
     }
+    
+    // ============================================
+    // SERIES LIST
+    // ============================================
+    
+    function renderSeriesList(categories) {
+        if (!categories || categories.length === 0) {
+            seriesList.innerHTML = '<div class="series-empty"><p>No podcast series found for this provider</p></div>';
+            return;
+        }
+        
+        var inputType = currentMode === 'digest' ? 'checkbox' : 'radio';
+        var html = '';
+        
+        if (currentMode === 'single') {
+            var isAllSelected = selectedSeries.length === 0;
+            html += '<div class="series-item' + (isAllSelected ? ' selected' : '') + '" data-id="" data-title="All Series">';
+            html += '<input type="radio" name="series" value="" ' + (isAllSelected ? 'checked' : '') + '>';
+            html += '<div class="series-info">';
+            html += '<div class="series-title">All Series</div>';
+            html += '<div class="series-meta">Show episodes from all podcasts</div>';
+            html += '</div></div>';
+        }
+        
+        categories.forEach(function(cat) {
+            var isSelected = selectedSeries.some(function(s) { return s.id === cat.id; });
+            
+            html += '<div class="series-item' + (isSelected ? ' selected' : '') + '" data-id="' + cat.id + '" data-title="' + escapeHtml(cat.title) + '">';
+            html += '<input type="' + inputType + '" name="series" value="' + cat.id + '" ' + (isSelected ? 'checked' : '') + '>';
+            html += '<div class="series-info">';
+            html += '<div class="series-title">' + escapeHtml(cat.title) + '</div>';
+            if (cat.additional && cat.additional.description) {
+                html += '<div class="series-meta">' + escapeHtml(cat.additional.description.substring(0, 60)) + '...</div>';
+            }
+            html += '</div></div>';
+        });
+        
+        seriesList.innerHTML = html;
+        
+        // Attach click handlers
+        var items = seriesList.querySelectorAll('.series-item');
+        items.forEach(function(item) {
+            item.addEventListener('click', function(e) {
+                var id = this.dataset.id;
+                var title = this.dataset.title;
+                var checkbox = this.querySelector('input');
+                
+                if (currentMode === 'digest') {
+                    if (id) {
+                        checkbox.checked = !checkbox.checked;
+                        this.classList.toggle('selected', checkbox.checked);
+                        
+                        if (checkbox.checked) {
+                            selectedSeries.push({ id: id, title: title });
+                        } else {
+                            selectedSeries = selectedSeries.filter(function(s) { return s.id !== id; });
+                        }
+                        
+                        updateSelectedCount();
+                    }
+                } else {
+                    items.forEach(function(i) { i.classList.remove('selected'); });
+                    this.classList.add('selected');
+                    checkbox.checked = true;
+                    
+                    if (id) {
+                        selectedSeries = [{ id: id, title: title }];
+                    } else {
+                        selectedSeries = [];
+                    }
+                }
+                
+                updateIsland();
+                updateGeneratedCode();
+                triggerAutoPreview();
+            });
+        });
+    }
+    
+    // Series search
+    seriesSearch.addEventListener('input', function() {
+        var query = this.value.toLowerCase();
+        var items = seriesList.querySelectorAll('.series-item');
+        
+        items.forEach(function(item) {
+            var title = item.dataset.title.toLowerCase();
+            if (title.includes(query) || query === '') {
+                item.classList.remove('hidden');
+            } else {
+                item.classList.add('hidden');
+            }
+        });
+    });
     
     // ============================================
     // TEMPLATE LIST
@@ -396,20 +671,21 @@ document.addEventListener('DOMContentLoaded', function() {
             ];
         }
         
+        var isFirst = true;
         templateGroups.forEach(function(group) {
-            group.templates.forEach(function(tmpl, index) {
-                var isFirst = index === 0 && group === templateGroups[0];
+            group.templates.forEach(function(tmpl) {
                 var activeClass = isFirst ? ' active' : '';
                 var recommendedClass = tmpl.recommended ? ' recommended' : '';
                 
                 if (isFirst) {
                     currentTemplate = tmpl;
+                    isFirst = false;
                 }
                 
                 html += '<div class="template-item' + activeClass + recommendedClass + '" data-template-id="' + tmpl.id + '">';
                 html += '<div class="template-title">' + tmpl.title;
                 if (tmpl.recommended) {
-                    html += ' <span class="template-recommended-badge">RECOMMENDED</span>';
+                    html += ' <span class="template-recommended-badge">BEST</span>';
                 }
                 html += '</div>';
                 html += '<div class="template-desc">' + tmpl.desc + '</div>';
@@ -419,7 +695,6 @@ document.addEventListener('DOMContentLoaded', function() {
         
         templateList.innerHTML = html;
         
-        // Attach click handlers
         var items = templateList.querySelectorAll('.template-item');
         items.forEach(function(item) {
             item.addEventListener('click', function() {
@@ -428,11 +703,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 var templateId = this.dataset.templateId;
                 currentTemplate = findTemplateById(templateId);
-                updateLiquidCode();
+                updateGeneratedCode();
             });
         });
         
-        updateLiquidCode();
+        updateGeneratedCode();
     }
     
     function findTemplateById(id) {
@@ -445,106 +720,8 @@ document.addEventListener('DOMContentLoaded', function() {
         return allTemplates.find(function(t) { return t.id === id; }) || allTemplates[0];
     }
     
-    function updateLiquidCode() {
-        if (!currentTemplate) return;
-        
-        var varName = variableInput.value || 'content';
-        var code = currentTemplate.code;
-        
-        // Handle digest templates
-        if (currentMode === 'digest' && selectedSeries.length > 0) {
-            code = generateDigestTemplate();
-        } else {
-            code = code.replace(/VAR/g, varName);
-        }
-        
-        liquidCode.textContent = code;
-    }
-    
-    function generateDigestTemplate() {
-        if (selectedSeries.length === 0) {
-            return '<!-- Select podcasts to generate digest template -->';
-        }
-        
-        var isGrouped = currentTemplate && currentTemplate.id === 'digest-grouped';
-        var code = '';
-        
-        if (isGrouped) {
-            // Grouped by podcast
-            selectedSeries.forEach(function(series, index) {
-                var varName = 'podcast_' + (index + 1);
-                code += '<!-- ' + series.title + ' -->\n';
-                code += '{% if ' + varName + '._embedded.assets.size > 0 %}\n';
-                code += '<div style="margin-bottom: 24px;">\n';
-                code += '  <h3 style="margin: 0 0 12px 0; color: #7c3aed;">🎙️ ' + series.title + '</h3>\n';
-                code += '  {% assign episode = ' + varName + '._embedded.assets[0] %}\n';
-                code += '  <div style="display: flex; gap: 12px; padding: 12px; border: 1px solid #e5e7eb; border-radius: 8px;">\n';
-                code += '    <img src="{{episode.images.main}}?t[]=80x80q80" style="width: 60px; height: 60px; border-radius: 8px;">\n';
-                code += '    <div>\n';
-                code += '      <h4 style="margin: 0 0 4px 0;">{{episode.title}}</h4>\n';
-                code += '      <p style="margin: 0; color: #666; font-size: 14px;">{{episode.duration | divided_by: 60000}} min</p>\n';
-                code += '    </div>\n';
-                code += '  </div>\n';
-                code += '</div>\n';
-                code += '{% endif %}\n\n';
-            });
-        } else {
-            // Combined list
-            code += '<h2 style="margin: 0 0 16px 0;">🎧 This Week\'s Episodes</h2>\n\n';
-            
-            selectedSeries.forEach(function(series, index) {
-                var varName = 'podcast_' + (index + 1);
-                code += '{% if ' + varName + '._embedded.assets.size > 0 %}\n';
-                code += '{% assign episode = ' + varName + '._embedded.assets[0] %}\n';
-                code += '<div style="display: flex; gap: 12px; margin-bottom: 16px; padding: 12px; border: 1px solid #e5e7eb; border-radius: 8px;">\n';
-                code += '  <img src="{{episode.images.main}}?t[]=80x80q80" style="width: 60px; height: 60px; border-radius: 8px;">\n';
-                code += '  <div>\n';
-                code += '    <p style="margin: 0 0 4px 0; color: #7c3aed; font-size: 12px; font-weight: 600;">' + series.title + '</p>\n';
-                code += '    <h4 style="margin: 0 0 4px 0;">{{episode.title}}</h4>\n';
-                code += '    <p style="margin: 0; color: #666; font-size: 14px;">{{episode.duration | divided_by: 60000}} min</p>\n';
-                code += '  </div>\n';
-                code += '</div>\n';
-                code += '{% endif %}\n\n';
-            });
-        }
-        
-        return code;
-    }
-    
     // ============================================
-    // QUICK TAGS (Sports)
-    // ============================================
-    
-    var quickTagButtons = document.querySelectorAll('.quick-tag');
-    quickTagButtons.forEach(function(tag) {
-        tag.addEventListener('click', function() {
-            this.classList.toggle('active');
-            updateGeneratedCode();
-        });
-    });
-    
-    // ============================================
-    // OUTPUT TABS
-    // ============================================
-    
-    outputTabs.forEach(function(tab) {
-        tab.addEventListener('click', function() {
-            outputTabs.forEach(function(t) { t.classList.remove('active'); });
-            this.classList.add('active');
-            
-            var tabName = this.dataset.tab;
-            if (tabName === 'connected') {
-                panelConnected.classList.remove('hidden');
-                panelLiquid.classList.add('hidden');
-            } else {
-                panelConnected.classList.add('hidden');
-                panelLiquid.classList.remove('hidden');
-            }
-        });
-    });
-    
-    // ============================================
-    // URL GENERATION
+    // CODE GENERATION
     // ============================================
     
     function buildUrl(seriesId) {
@@ -571,14 +748,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 filters.push('additional.access.free::false');
             }
             
-            // Date filter
             if (podcastDateFilter.value) {
                 var days = parseInt(podcastDateFilter.value);
                 var since = Date.now() - (days * 24 * 60 * 60 * 1000);
                 filters.push('published>' + since);
             }
             
-            // Series filter
             if (seriesId) {
                 filters.push('categoryId::' + seriesId);
             }
@@ -627,175 +802,142 @@ document.addEventListener('DOMContentLoaded', function() {
         var varName = variableInput.value || 'content';
         
         if (!provider) {
-            brazeCode.textContent = 'Select a provider to begin...';
-            readableUrl.textContent = 'https://svp.vg.no/...';
+            generatedConnectedContent = '// Select a provider to generate code';
+            generatedLiquidCode = '// Select a provider to generate code';
+            connectedSubtitle.textContent = 'Select a provider first';
+            liquidSubtitle.textContent = 'Select a provider first';
             return;
         }
         
+        // Generate Connected Content
         if (currentContentType === 'podcasts' && currentMode === 'digest' && selectedSeries.length > 0) {
-            // Generate multiple Connected Content blocks
             var code = '';
-            var urls = [];
-            
             selectedSeries.forEach(function(series, index) {
                 var seriesVarName = 'podcast_' + (index + 1);
                 var url = buildUrl(series.id);
-                urls.push(url);
                 code += '{% connected_content ' + url + ' :save ' + seriesVarName + ' %}\n';
             });
-            
-            brazeCode.textContent = code.trim();
-            readableUrl.textContent = 'Multiple API calls:\n\n' + urls.map(function(u, i) {
-                return (i + 1) + '. ' + decodeURIComponent(u);
-            }).join('\n\n');
-            
+            generatedConnectedContent = code.trim();
+            connectedSubtitle.textContent = selectedSeries.length + ' API calls ready';
         } else {
-            // Single URL
             var seriesId = currentMode === 'single' && selectedSeries.length > 0 
                 ? selectedSeries[0].id 
                 : null;
             var url = buildUrl(seriesId);
-            
-            if (!url) return;
-            
-            brazeCode.textContent = '{% connected_content ' + url + ' :save ' + varName + ' %}';
-            readableUrl.textContent = decodeURIComponent(url);
+            generatedConnectedContent = '{% connected_content ' + url + ' :save ' + varName + ' %}';
+            connectedSubtitle.textContent = '1 API call ready';
         }
         
-        updateLiquidCode();
-    }
-    
-    // ============================================
-    // FETCH PODCAST SERIES
-    // ============================================
-    
-    fetchSeriesBtn.addEventListener('click', function() {
-        var provider = providerSelect.value;
-        if (!provider) {
-            showToast('Please select a provider first');
+        // Generate Liquid Code
+        if (!currentTemplate) {
+            generatedLiquidCode = '// Select a template';
+            liquidSubtitle.textContent = 'Select a template';
             return;
         }
-        
-        fetchSeriesBtn.disabled = true;
-        fetchSeriesBtn.classList.add('loading');
-        fetchSeriesBtn.innerHTML = '<span class="fetch-icon">🔄</span> Loading...';
-        
-        var url = 'https://svp.vg.no/svp/api/v1/' + provider + '/categories?appName=braze_content&limit=100&filter=isSeries::true';
-        
-        fetch(url)
-            .then(function(response) {
-                if (!response.ok) throw new Error('Failed to fetch');
-                return response.json();
-            })
-            .then(function(data) {
-                seriesData = data._embedded ? data._embedded.categories : [];
-                renderSeriesList(seriesData);
-            })
-            .catch(function(error) {
-                console.error('Error fetching series:', error);
-                seriesList.innerHTML = '<div class="series-empty"><p>Failed to load series. Try again.</p></div>';
-            })
-            .finally(function() {
-                fetchSeriesBtn.disabled = false;
-                fetchSeriesBtn.classList.remove('loading');
-                fetchSeriesBtn.innerHTML = '<span class="fetch-icon">🔄</span> Load Series';
-            });
-    });
-    
-    function renderSeriesList(categories) {
-        if (!categories || categories.length === 0) {
-            seriesList.innerHTML = '<div class="series-empty"><p>No podcast series found for this provider</p></div>';
-            return;
-        }
-        
-        var inputType = currentMode === 'digest' ? 'checkbox' : 'radio';
-        var html = '';
-        
-        if (currentMode === 'single') {
-            var isAllSelected = selectedSeries.length === 0;
-            html += '<div class="series-item' + (isAllSelected ? ' selected' : '') + '" data-id="" data-title="All Series">';
-            html += '<input type="radio" name="series" value="" ' + (isAllSelected ? 'checked' : '') + '>';
-            html += '<div class="series-info">';
-            html += '<div class="series-title">All Series</div>';
-            html += '<div class="series-meta">Show episodes from all podcasts</div>';
-            html += '</div></div>';
-        }
-        
-        categories.forEach(function(cat) {
-            var isSelected = selectedSeries.some(function(s) { return s.id === cat.id; });
-            
-            html += '<div class="series-item' + (isSelected ? ' selected' : '') + '" data-id="' + cat.id + '" data-title="' + escapeHtml(cat.title) + '">';
-            html += '<input type="' + inputType + '" name="series" value="' + cat.id + '" ' + (isSelected ? 'checked' : '') + '>';
-            html += '<div class="series-info">';
-            html += '<div class="series-title">' + escapeHtml(cat.title) + '</div>';
-            if (cat.additional && cat.additional.description) {
-                html += '<div class="series-meta">' + escapeHtml(cat.additional.description.substring(0, 60)) + '...</div>';
-            }
-            html += '</div></div>';
-        });
-        
-        seriesList.innerHTML = html;
-        
-        // Attach click handlers
-        var items = seriesList.querySelectorAll('.series-item');
-        items.forEach(function(item) {
-            item.addEventListener('click', function(e) {
-                var id = this.dataset.id;
-                var title = this.dataset.title;
-                var checkbox = this.querySelector('input');
-                
-                if (currentMode === 'digest') {
-                    // Multi-select mode
-                    if (id) { // Can't select "All" in digest mode
-                        checkbox.checked = !checkbox.checked;
-                        this.classList.toggle('selected', checkbox.checked);
-                        
-                        if (checkbox.checked) {
-                            selectedSeries.push({ id: id, title: title });
-                        } else {
-                            selectedSeries = selectedSeries.filter(function(s) { return s.id !== id; });
-                        }
-                        
-                        updateSelectedCount();
-                    }
-                } else {
-                    // Single-select mode
-                    items.forEach(function(i) { i.classList.remove('selected'); });
-                    this.classList.add('selected');
-                    checkbox.checked = true;
-                    
-                    if (id) {
-                        selectedSeries = [{ id: id, title: title }];
-                    } else {
-                        selectedSeries = [];
-                    }
-                    
-                    showToast(id ? 'Selected: ' + title : 'Showing all series');
-                }
-                
-                updateGeneratedCode();
-            });
-        });
-    }
-    
-    // ============================================
-    // PREVIEW
-    // ============================================
-    
-    loadPreviewBtn.addEventListener('click', function() {
-        var provider = providerSelect.value;
-        if (!provider) {
-            showToast('Please select a provider first');
-            return;
-        }
-        
-        loadPreviewBtn.disabled = true;
-        loadPreviewBtn.classList.add('loading');
-        loadPreviewBtn.textContent = 'Loading...';
-        previewContent.innerHTML = '<div class="preview-empty"><div class="preview-empty-icon">⏳</div><p>Fetching content...</p></div>';
         
         if (currentMode === 'digest' && selectedSeries.length > 0) {
-            // Fetch all selected series
+            generatedLiquidCode = generateDigestTemplate();
+            liquidSubtitle.textContent = 'Digest template ready';
+        } else {
+            generatedLiquidCode = currentTemplate.code.replace(/VAR/g, varName);
+            liquidSubtitle.textContent = currentTemplate.title + ' ready';
+        }
+    }
+    
+    function generateDigestTemplate() {
+        if (selectedSeries.length === 0) {
+            return '<!-- Select podcasts to generate digest template -->';
+        }
+        
+        var isGrouped = currentTemplate && currentTemplate.id === 'digest-grouped';
+        var code = '';
+        
+        if (isGrouped) {
+            selectedSeries.forEach(function(series, index) {
+                var varName = 'podcast_' + (index + 1);
+                code += '<!-- ' + series.title + ' -->\n';
+                code += '{% if ' + varName + '._embedded.assets.size > 0 %}\n';
+                code += '<div style="margin-bottom: 24px;">\n';
+                code += '  <h3 style="margin: 0 0 12px 0; color: #7c3aed;">🎙️ ' + series.title + '</h3>\n';
+                code += '  {% assign episode = ' + varName + '._embedded.assets[0] %}\n';
+                code += '  <div style="display: flex; gap: 12px; padding: 12px; border: 1px solid #e5e7eb; border-radius: 8px;">\n';
+                code += '    <img src="{{episode.images.main}}?t[]=80x80q80" style="width: 60px; height: 60px; border-radius: 8px;">\n';
+                code += '    <div>\n';
+                code += '      <h4 style="margin: 0 0 4px 0;">{{episode.title}}</h4>\n';
+                code += '      <p style="margin: 0; color: #666; font-size: 14px;">{{episode.duration | divided_by: 60000}} min</p>\n';
+                code += '    </div>\n';
+                code += '  </div>\n';
+                code += '</div>\n';
+                code += '{% endif %}\n\n';
+            });
+        } else {
+            code += '<h2 style="margin: 0 0 16px 0;">🎧 This Week\'s Episodes</h2>\n\n';
+            
+            selectedSeries.forEach(function(series, index) {
+                var varName = 'podcast_' + (index + 1);
+                code += '{% if ' + varName + '._embedded.assets.size > 0 %}\n';
+                code += '{% assign episode = ' + varName + '._embedded.assets[0] %}\n';
+                code += '<div style="display: flex; gap: 12px; margin-bottom: 16px; padding: 12px; border: 1px solid #e5e7eb; border-radius: 8px;">\n';
+                code += '  <img src="{{episode.images.main}}?t[]=80x80q80" style="width: 60px; height: 60px; border-radius: 8px;">\n';
+                code += '  <div>\n';
+                code += '    <p style="margin: 0 0 4px 0; color: #7c3aed; font-size: 12px; font-weight: 600;">' + series.title + '</p>\n';
+                code += '    <h4 style="margin: 0 0 4px 0;">{{episode.title}}</h4>\n';
+                code += '    <p style="margin: 0; color: #666; font-size: 14px;">{{episode.duration | divided_by: 60000}} min</p>\n';
+                code += '  </div>\n';
+                code += '</div>\n';
+                code += '{% endif %}\n\n';
+            });
+        }
+        
+        return code;
+    }
+    
+    function getCompleteCode() {
+        return generatedConnectedContent + '\n\n' + generatedLiquidCode;
+    }
+    
+    // ============================================
+    // AUTO-PREVIEW
+    // ============================================
+    
+    function triggerAutoPreview() {
+        if (!providerSelect.value) return;
+        
+        // Clear existing timer
+        if (previewDebounceTimer) {
+            clearTimeout(previewDebounceTimer);
+        }
+        
+        // Show loading state
+        setPreviewLoading(true);
+        
+        // Debounce - wait 600ms after last change
+        previewDebounceTimer = setTimeout(function() {
+            loadPreview();
+        }, 600);
+    }
+    
+    function setPreviewLoading(loading) {
+        if (loading) {
+            previewStatus.classList.add('loading');
+            previewStatus.querySelector('.preview-status-text').textContent = 'Updating...';
+        } else {
+            previewStatus.classList.remove('loading');
+            previewStatus.querySelector('.preview-status-text').textContent = 'Auto-updates';
+        }
+    }
+    
+    function loadPreview() {
+        var provider = providerSelect.value;
+        if (!provider) {
+            previewContent.innerHTML = '<div class="preview-empty"><div class="preview-empty-icon">📡</div><p>Select a provider to see preview</p></div>';
+            setPreviewLoading(false);
+            return;
+        }
+        
+        setIslandLoading(true);
+        
+        if (currentMode === 'digest' && selectedSeries.length > 0) {
             var promises = selectedSeries.map(function(series) {
                 var url = buildUrl(series.id);
                 return fetch(url)
@@ -814,12 +956,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     previewContent.innerHTML = '<div class="preview-error">Failed to load preview.</div>';
                 })
                 .finally(function() {
-                    loadPreviewBtn.disabled = false;
-                    loadPreviewBtn.classList.remove('loading');
-                    loadPreviewBtn.textContent = 'Load Preview';
+                    setPreviewLoading(false);
+                    setIslandLoading(false);
                 });
         } else {
-            // Single fetch
             var seriesId = selectedSeries.length > 0 ? selectedSeries[0].id : null;
             var url = buildUrl(seriesId);
             
@@ -837,12 +977,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     previewCount.textContent = '';
                 })
                 .finally(function() {
-                    loadPreviewBtn.disabled = false;
-                    loadPreviewBtn.classList.remove('loading');
-                    loadPreviewBtn.textContent = 'Load Preview';
+                    setPreviewLoading(false);
+                    setIslandLoading(false);
                 });
         }
-    });
+    }
     
     function renderPreview(data) {
         var assets = data._embedded && data._embedded.assets ? data._embedded.assets : [];
@@ -880,7 +1019,7 @@ document.addEventListener('DOMContentLoaded', function() {
             html += '</div>';
         });
         
-        previewCount.textContent = totalCount + ' total episode' + (totalCount !== 1 ? 's' : '') + ' from ' + results.length + ' podcasts';
+        previewCount.textContent = totalCount + ' episode' + (totalCount !== 1 ? 's' : '') + ' from ' + results.length + ' podcasts';
         previewContent.innerHTML = html;
     }
     
@@ -925,10 +1064,18 @@ document.addEventListener('DOMContentLoaded', function() {
         return html;
     }
     
-    function clearPreview() {
-        previewContent.innerHTML = '<div class="preview-empty"><div class="preview-empty-icon">🔍</div><p>Click "Load Preview" to see what content your query will return</p></div>';
-        previewCount.textContent = '';
-    }
+    // ============================================
+    // QUICK TAGS (Sports)
+    // ============================================
+    
+    var quickTagButtons = document.querySelectorAll('.quick-tag');
+    quickTagButtons.forEach(function(tag) {
+        tag.addEventListener('click', function() {
+            this.classList.toggle('active');
+            updateGeneratedCode();
+            triggerAutoPreview();
+        });
+    });
     
     // ============================================
     // RESET FILTERS
@@ -942,6 +1089,7 @@ document.addEventListener('DOMContentLoaded', function() {
             tag.classList.remove('active');
         });
         updateGeneratedCode();
+        triggerAutoPreview();
         showToast('Filters reset');
     });
     
@@ -953,67 +1101,200 @@ document.addEventListener('DOMContentLoaded', function() {
         podcastDateFilter.value = '';
         selectedSeries = [];
         currentMode = 'single';
+        seriesSearch.value = '';
         
         updateModeToggle('single');
         updateModeUI();
         
-        // Reset series selection UI
-        var items = seriesList.querySelectorAll('.series-item');
-        items.forEach(function(item) {
-            item.classList.remove('selected');
-            item.querySelector('input').checked = false;
-            if (item.dataset.id === '') {
-                item.classList.add('selected');
-                item.querySelector('input').checked = true;
-            }
-        });
+        if (seriesData.length > 0) {
+            renderSeriesList(seriesData);
+        }
         
+        updateIsland();
         updateGeneratedCode();
         renderTemplateList();
+        triggerAutoPreview();
         showToast('Podcast filters reset');
     });
     
     // ============================================
-    // INPUT CHANGE HANDLERS
+    // INPUT CHANGE HANDLERS (with auto-preview)
     // ============================================
     
-    providerSelect.addEventListener('change', function() {
-        selectedSeries = [];
-        seriesData = [];
-        seriesList.innerHTML = '<div class="series-empty"><p>Select a provider and click "Load Series" to see available podcasts</p></div>';
-        seriesSelectedCount.classList.add('hidden');
-        clearPreview();
+    variableInput.addEventListener('input', function() {
         updateGeneratedCode();
     });
     
-    variableInput.addEventListener('input', updateGeneratedCode);
-    filterLimit.addEventListener('input', updateGeneratedCode);
-    filterSort.addEventListener('change', updateGeneratedCode);
-    filterCategory.addEventListener('change', updateGeneratedCode);
+    filterLimit.addEventListener('input', function() {
+        updateGeneratedCode();
+        triggerAutoPreview();
+    });
     
-    podcastContentType.addEventListener('change', updateGeneratedCode);
-    podcastAccess.addEventListener('change', updateGeneratedCode);
-    podcastLimit.addEventListener('input', updateGeneratedCode);
-    podcastSort.addEventListener('change', updateGeneratedCode);
-    podcastDateFilter.addEventListener('change', updateGeneratedCode);
+    filterSort.addEventListener('change', function() {
+        updateGeneratedCode();
+        triggerAutoPreview();
+    });
+    
+    filterCategory.addEventListener('change', function() {
+        updateGeneratedCode();
+        triggerAutoPreview();
+    });
+    
+    podcastContentType.addEventListener('change', function() {
+        updateGeneratedCode();
+        triggerAutoPreview();
+    });
+    
+    podcastAccess.addEventListener('change', function() {
+        updateGeneratedCode();
+        triggerAutoPreview();
+    });
+    
+    podcastLimit.addEventListener('input', function() {
+        updateGeneratedCode();
+        triggerAutoPreview();
+    });
+    
+    podcastSort.addEventListener('change', function() {
+        updateGeneratedCode();
+        triggerAutoPreview();
+    });
+    
+    podcastDateFilter.addEventListener('change', function() {
+        updateGeneratedCode();
+        triggerAutoPreview();
+    });
     
     // ============================================
     // COPY BUTTONS
     // ============================================
     
-    var copyButtons = document.querySelectorAll('.copy-btn');
-    copyButtons.forEach(function(btn) {
-        btn.addEventListener('click', function() {
-            var targetId = this.dataset.target;
-            var targetElement = document.getElementById(targetId);
-            var text = targetElement.textContent;
+    copyConnectedBtn.addEventListener('click', function() {
+        copyToClipboard(generatedConnectedContent);
+    });
+    
+    copyLiquidBtn.addEventListener('click', function() {
+        copyToClipboard(generatedLiquidCode);
+    });
+    
+    copyAllBtn.addEventListener('click', function() {
+        copyToClipboard(getCompleteCode());
+    });
+    
+    function copyToClipboard(text) {
+        navigator.clipboard.writeText(text).then(function() {
+            showToast('Copied to clipboard!');
+        }).catch(function(err) {
+            console.error('Copy failed:', err);
+            showToast('Failed to copy');
+        });
+    }
+    
+    // ============================================
+    // MODAL
+    // ============================================
+    
+    var currentModalTab = 'connected';
+    
+    function openModal(tab) {
+        currentModalTab = tab || 'connected';
+        updateModalContent();
+        modalOverlay.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+        
+        // Update tab state
+        modalTabs.forEach(function(t) {
+            t.classList.toggle('active', t.dataset.tab === currentModalTab);
+        });
+    }
+    
+    function closeModal() {
+        modalOverlay.classList.add('hidden');
+        document.body.style.overflow = '';
+    }
+    
+    function updateModalContent() {
+        switch(currentModalTab) {
+            case 'connected':
+                modalTitle.textContent = 'Connected Content Code';
+                modalCodeLabel.textContent = 'CONNECTED CONTENT';
+                modalCode.textContent = generatedConnectedContent;
+                break;
+            case 'liquid':
+                modalTitle.textContent = 'Liquid Template Code';
+                modalCodeLabel.textContent = 'LIQUID TEMPLATE';
+                modalCode.textContent = generatedLiquidCode;
+                break;
+            case 'complete':
+                modalTitle.textContent = 'Complete Code';
+                modalCodeLabel.textContent = 'CONNECTED CONTENT + LIQUID TEMPLATE';
+                modalCode.textContent = getCompleteCode();
+                break;
+        }
+    }
+    
+    viewConnectedBtn.addEventListener('click', function() {
+        openModal('connected');
+    });
+    
+    viewLiquidBtn.addEventListener('click', function() {
+        openModal('liquid');
+    });
+    
+    viewAllBtn.addEventListener('click', function() {
+        openModal('complete');
+    });
+    
+    modalCloseBtn.addEventListener('click', closeModal);
+    
+    modalOverlay.addEventListener('click', function(e) {
+        if (e.target === modalOverlay) {
+            closeModal();
+        }
+    });
+    
+    modalTabs.forEach(function(tab) {
+        tab.addEventListener('click', function() {
+            modalTabs.forEach(function(t) { t.classList.remove('active'); });
+            this.classList.add('active');
+            currentModalTab = this.dataset.tab;
+            updateModalContent();
+        });
+    });
+    
+    modalCopyBtn.addEventListener('click', function() {
+        var text = modalCode.textContent;
+        copyToClipboard(text);
+    });
+    
+    // ESC to close modal
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && !modalOverlay.classList.contains('hidden')) {
+            closeModal();
+        }
+    });
+    
+    // ============================================
+    // TOOLTIPS
+    // ============================================
+    
+    var infoBtns = document.querySelectorAll('.info-btn');
+    
+    infoBtns.forEach(function(btn) {
+        btn.addEventListener('mouseenter', function(e) {
+            var text = this.dataset.tooltip;
+            if (!text) return;
             
-            navigator.clipboard.writeText(text).then(function() {
-                showToast('Copied to clipboard!');
-            }).catch(function(err) {
-                console.error('Copy failed:', err);
-                showToast('Failed to copy');
-            });
+            tooltip.textContent = text;
+            tooltip.classList.add('visible');
+            
+            var rect = this.getBoundingClientRect();
+            tooltip.style.left = rect.left + 'px';
+            tooltip.style.top = (rect.bottom + 8) + 'px';
+        });
+        
+        btn.addEventListener('mouseleave', function() {
+            tooltip.classList.remove('visible');
         });
     });
     
@@ -1042,8 +1323,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     renderPresetCards(contentTypes.live.presets);
     renderTemplateList();
-    updateGeneratedCode();
+    updateIsland();
     
-    console.log('SVP Builder v5 initialized with Digest Mode');
+    console.log('SVP Builder v6 initialized');
+    console.log('Features: Auto-preview, Auto-load series, Dynamic Island, Tooltips, Modal');
     
 });
