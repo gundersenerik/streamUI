@@ -58,21 +58,7 @@
             </header>
 
             <section class="preset-cards" id="preset-cards">
-                <div class="preset-card active" data-preset="all-live">
-                    <div class="preset-icon">🔴</div>
-                    <div class="preset-title">All Live Now</div>
-                    <div class="preset-desc">Everything currently streaming</div>
-                </div>
-                <div class="preset-card" data-preset="recent">
-                    <div class="preset-icon">🔄</div>
-                    <div class="preset-title">Recently Ended</div>
-                    <div class="preset-desc">Last 24 hours</div>
-                </div>
-                <div class="preset-card" data-preset="soon">
-                    <div class="preset-icon">📅</div>
-                    <div class="preset-title">Starting Soon</div>
-                    <div class="preset-desc">Next 3 hours</div>
-                </div>
+                <!-- Dynamically populated -->
             </section>
 
             <!-- GENERAL FILTERS (shown for Live, Sports, VOD, All) -->
@@ -98,9 +84,9 @@
                     <div class="filter-group">
                         <label class="filter-label">SORT</label>
                         <select class="filter-select" id="filter-sort">
-                            <option value="published">Newest First</option>
-                            <option value="-published">Oldest First</option>
-                            <option value="flightTimes.start">Start Time (Latest)</option>
+                            <option value="-published">Newest First</option>
+                            <option value="published">Oldest First</option>
+                            <option value="-flightTimes.start">Start Time (Latest)</option>
                         </select>
                     </div>
                 </div>
@@ -118,6 +104,26 @@
                 <div class="filters-header">
                     <h3>🎙️ Podcast Filters</h3>
                     <button class="reset-btn" id="reset-podcast-filters">Reset all</button>
+                </div>
+
+                <!-- Mode Toggle -->
+                <div class="mode-toggle">
+                    <button class="mode-btn active" data-mode="single">
+                        <span class="mode-icon">🎧</span>
+                        <span>Single Podcast</span>
+                    </button>
+                    <button class="mode-btn" data-mode="digest">
+                        <span class="mode-icon">📰</span>
+                        <span>Weekly Digest</span>
+                    </button>
+                </div>
+
+                <!-- Mode Info -->
+                <div class="mode-info" id="mode-info">
+                    <div class="mode-info-icon">💡</div>
+                    <div class="mode-info-text">
+                        <strong>Single Podcast Mode:</strong> Fetch episodes from one podcast. Perfect for automated "new episode" emails.
+                    </div>
                 </div>
                 
                 <div class="filters-grid">
@@ -139,7 +145,7 @@
                         </select>
                     </div>
                     
-                    <div class="filter-group">
+                    <div class="filter-group" id="limit-group">
                         <label class="filter-label">RESULTS</label>
                         <input type="number" class="filter-input" id="podcast-limit" value="10" min="1" max="100">
                     </div>
@@ -147,10 +153,21 @@
                     <div class="filter-group">
                         <label class="filter-label">SORT BY</label>
                         <select class="filter-select" id="podcast-sort">
-                            <option value="published">Newest First</option>
-                            <option value="-published">Oldest First</option>
-                            <option value="duration">Longest First</option>
-                            <option value="-duration">Shortest First</option>
+                            <option value="-published">Newest First</option>
+                            <option value="published">Oldest First</option>
+                            <option value="-duration">Longest First</option>
+                            <option value="duration">Shortest First</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group" id="date-filter-group">
+                        <label class="filter-label">RELEASED WITHIN</label>
+                        <select class="filter-select" id="podcast-date-filter">
+                            <option value="">Any Time</option>
+                            <option value="1">Last 24 Hours</option>
+                            <option value="7">Last 7 Days</option>
+                            <option value="14">Last 14 Days</option>
+                            <option value="30">Last 30 Days</option>
                         </select>
                     </div>
                 </div>
@@ -158,7 +175,7 @@
                 <!-- Podcast Series Selection -->
                 <div class="series-section">
                     <div class="series-header">
-                        <label class="filter-label">SELECT PODCAST SERIES</label>
+                        <label class="filter-label" id="series-label">SELECT PODCAST SERIES</label>
                         <button class="fetch-series-btn" id="fetch-series">
                             <span class="fetch-icon">🔄</span>
                             Load Series
@@ -168,6 +185,9 @@
                         <div class="series-empty">
                             <p>Select a provider and click "Load Series" to see available podcasts</p>
                         </div>
+                    </div>
+                    <div class="series-selected-count hidden" id="series-selected-count">
+                        <span id="selected-count-text">0 podcasts selected</span>
                     </div>
                 </div>
             </section>
@@ -219,6 +239,7 @@
             <div class="variable-section">
                 <label class="field-label">VARIABLE NAME</label>
                 <input type="text" id="variable-name" class="variable-input" value="content">
+                <small class="variable-hint" id="variable-hint"></small>
             </div>
 
             <div class="output-tabs">
@@ -246,46 +267,7 @@
 
             <div class="output-panel hidden" id="panel-liquid">
                 <div class="template-list" id="template-list">
-                    <div class="template-item" data-template="0">
-                        <div class="template-title">Single Item - Simple</div>
-                        <div class="template-desc">Title and description only</div>
-                    </div>
-                    <div class="template-item" data-template="1">
-                        <div class="template-title">Single Item - Card</div>
-                        <div class="template-desc">Card with image</div>
-                    </div>
-                    <div class="template-item" data-template="2">
-                        <div class="template-title">List - Bullet Points</div>
-                        <div class="template-desc">Simple list of titles</div>
-                    </div>
-                    <div class="template-item" data-template="3">
-                        <div class="template-title">List - With Details</div>
-                        <div class="template-desc">Title, description, and meta</div>
-                    </div>
-                    <div class="template-item active" data-template="4">
-                        <div class="template-title">Grid Layout</div>
-                        <div class="template-desc">2-column grid with images</div>
-                    </div>
-                    <div class="template-item" data-template="5">
-                        <div class="template-title">Sports Schedule</div>
-                        <div class="template-desc">Match times and teams</div>
-                    </div>
-                    <div class="template-item" data-template="6">
-                        <div class="template-title">Podcast Episodes</div>
-                        <div class="template-desc">Audio-focused layout</div>
-                    </div>
-                    <div class="template-item" data-template="7">
-                        <div class="template-title">With Live Badge</div>
-                        <div class="template-desc">Shows LIVE indicator</div>
-                    </div>
-                    <div class="template-item" data-template="8">
-                        <div class="template-title">Featured + List</div>
-                        <div class="template-desc">Large hero item with list</div>
-                    </div>
-                    <div class="template-item" data-template="9">
-                        <div class="template-title">With Fallback</div>
-                        <div class="template-desc">Shows message if no content</div>
-                    </div>
+                    <!-- Templates will be dynamically populated based on mode -->
                 </div>
 
                 <div class="code-section">
