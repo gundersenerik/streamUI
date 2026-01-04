@@ -1,0 +1,2371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SVP Builder v6 - Test</title>
+    <style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #F1F5F9;
+    color: #1E293B;
+    line-height: 1.5;
+}
+
+.app-layout {
+    display: grid;
+    grid-template-columns: 220px 1fr 340px;
+    min-height: 100vh;
+}
+
+/* LEFT SIDEBAR */
+.sidebar-left {
+    background: #1E293B;
+    color: white;
+    padding: 20px 0;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 20px 24px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    margin-bottom: 24px;
+}
+
+.logo-icon {
+    width: 40px;
+    height: 40px;
+    background: #3B82F6;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+}
+
+.logo-text {
+    display: flex;
+    flex-direction: column;
+}
+
+.logo-title {
+    font-weight: 600;
+    font-size: 16px;
+}
+
+.logo-subtitle {
+    font-size: 11px;
+    color: #94A3B8;
+}
+
+.content-type-nav {
+    padding: 0 12px;
+}
+
+.nav-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #64748B;
+    padding: 0 12px;
+    margin-bottom: 8px;
+    letter-spacing: 0.5px;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 12px;
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    color: #CBD5E1;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: left;
+}
+
+.nav-item:hover {
+    background: rgba(255,255,255,0.05);
+    color: white;
+}
+
+.nav-item.active {
+    background: #3B82F6;
+    color: white;
+}
+
+.nav-icon {
+    font-size: 18px;
+}
+
+/* MAIN CONTENT */
+.main-content {
+    padding: 32px;
+    overflow-y: auto;
+}
+
+.content-header {
+    margin-bottom: 24px;
+}
+
+.content-header h1 {
+    font-size: 28px;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.content-header p {
+    color: #64748B;
+    font-size: 15px;
+}
+
+/* PRESET CARDS */
+.preset-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.preset-card {
+    background: white;
+    border: 2px solid #E2E8F0;
+    border-radius: 12px;
+    padding: 16px;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.preset-card:hover {
+    border-color: #3B82F6;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+}
+
+.preset-card.active {
+    border-color: #3B82F6;
+    background: #EFF6FF;
+}
+
+.preset-card.featured {
+    border-color: #10B981;
+    background: linear-gradient(135deg, #ECFDF5 0%, #FFFFFF 100%);
+}
+
+.preset-card.featured:hover {
+    border-color: #059669;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+}
+
+.preset-card.featured.active {
+    border-color: #059669;
+    background: #ECFDF5;
+}
+
+.preset-icon {
+    font-size: 24px;
+    margin-bottom: 8px;
+}
+
+.preset-title {
+    font-weight: 600;
+    font-size: 14px;
+    margin-bottom: 2px;
+}
+
+.preset-desc {
+    font-size: 12px;
+    color: #64748B;
+}
+
+.preset-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    background: #10B981;
+    color: white;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: 600;
+    margin-top: 8px;
+}
+
+/* FILTERS */
+.filters-section {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    border: 1px solid #E2E8F0;
+}
+
+.filters-section.hidden {
+    display: none;
+}
+
+.filters-section.podcast-filters {
+    border: 2px solid #A855F7;
+    background: linear-gradient(135deg, #FAF5FF 0%, #FFFFFF 100%);
+}
+
+.filters-section.podcast-filters h3 {
+    color: #7C3AED;
+}
+
+.filters-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.filters-header h3 {
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.reset-btn {
+    background: none;
+    border: none;
+    color: #3B82F6;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.reset-btn:hover {
+    text-decoration: underline;
+}
+
+/* MODE TOGGLE */
+.mode-toggle {
+    display: flex;
+    gap: 8px;
+    padding: 4px;
+    background: #F3E8FF;
+    border-radius: 10px;
+    margin-bottom: 16px;
+}
+
+.mode-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 16px;
+    border: none;
+    background: transparent;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #7C3AED;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.mode-btn:hover {
+    background: rgba(255,255,255,0.5);
+}
+
+.mode-btn.active {
+    background: white;
+    color: #7C3AED;
+    box-shadow: 0 2px 8px rgba(124, 58, 237, 0.15);
+}
+
+.mode-icon {
+    font-size: 18px;
+}
+
+/* MODE INFO */
+.mode-info {
+    display: flex;
+    gap: 12px;
+    padding: 14px 16px;
+    background: #EDE9FE;
+    border-radius: 8px;
+    margin-bottom: 16px;
+}
+
+.mode-info-icon {
+    font-size: 20px;
+    flex-shrink: 0;
+}
+
+.mode-info-text {
+    font-size: 13px;
+    color: #5B21B6;
+    line-height: 1.5;
+}
+
+.mode-info-text strong {
+    color: #4C1D95;
+}
+
+.filters-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 16px;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.filter-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #64748B;
+    letter-spacing: 0.5px;
+}
+
+.filter-select,
+.filter-input {
+    padding: 10px 12px;
+    border: 1px solid #E2E8F0;
+    border-radius: 8px;
+    font-size: 14px;
+    background: white;
+    color: #1E293B;
+}
+
+.filter-select:focus,
+.filter-input:focus {
+    outline: none;
+    border-color: #3B82F6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* SERIES SECTION */
+.series-section {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #E9D5FF;
+}
+
+.series-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.fetch-series-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    background: #7C3AED;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.fetch-series-btn:hover {
+    background: #6D28D9;
+}
+
+.fetch-series-btn:disabled {
+    background: #C4B5FD;
+    cursor: not-allowed;
+}
+
+.fetch-series-btn.loading .fetch-icon {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.series-list {
+    max-height: 240px;
+    overflow-y: auto;
+    border: 1px solid #E9D5FF;
+    border-radius: 8px;
+    background: white;
+}
+
+.series-empty {
+    padding: 24px;
+    text-align: center;
+    color: #94A3B8;
+    font-size: 13px;
+}
+
+.series-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border-bottom: 1px solid #F3E8FF;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.series-item:last-child {
+    border-bottom: none;
+}
+
+.series-item:hover {
+    background: #FAF5FF;
+}
+
+.series-item.selected {
+    background: #EDE9FE;
+}
+
+.series-item input[type="radio"],
+.series-item input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: #7C3AED;
+    flex-shrink: 0;
+}
+
+.series-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.series-title {
+    font-weight: 500;
+    font-size: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.series-meta {
+    font-size: 12px;
+    color: #64748B;
+}
+
+.series-selected-count {
+    margin-top: 12px;
+    padding: 10px 14px;
+    background: #7C3AED;
+    color: white;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    text-align: center;
+}
+
+.series-selected-count.hidden {
+    display: none;
+}
+
+/* QUICK TAGS */
+.quick-tags {
+    display: none;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid #E2E8F0;
+}
+
+.quick-tags.visible {
+    display: flex;
+}
+
+.quick-tag {
+    padding: 6px 14px;
+    background: #F1F5F9;
+    border: 1px solid #E2E8F0;
+    border-radius: 20px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.quick-tag:hover {
+    background: #E2E8F0;
+}
+
+.quick-tag.active {
+    background: #3B82F6;
+    color: white;
+    border-color: #3B82F6;
+}
+
+/* PREVIEW */
+.preview-section {
+    background: white;
+    border-radius: 12px;
+    border: 1px solid #E2E8F0;
+    overflow: hidden;
+}
+
+.preview-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 20px;
+    border-bottom: 1px solid #E2E8F0;
+    background: #F8FAFC;
+}
+
+.preview-icon {
+    font-size: 16px;
+}
+
+.preview-title {
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.preview-count {
+    flex: 1;
+    font-size: 13px;
+    color: #64748B;
+}
+
+.preview-btn {
+    padding: 8px 16px;
+    background: #3B82F6;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.preview-btn:hover {
+    background: #2563EB;
+}
+
+.preview-btn:disabled {
+    background: #93C5FD;
+    cursor: not-allowed;
+}
+
+.preview-btn.loading {
+    background: #93C5FD;
+}
+
+.preview-content {
+    padding: 20px;
+    min-height: 150px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.preview-empty {
+    text-align: center;
+    color: #94A3B8;
+    padding: 30px 20px;
+}
+
+.preview-empty-icon {
+    font-size: 36px;
+    margin-bottom: 10px;
+}
+
+.preview-empty p {
+    font-size: 14px;
+}
+
+.preview-error {
+    padding: 16px;
+    background: #FEF2F2;
+    border: 1px solid #FECACA;
+    border-radius: 8px;
+    color: #DC2626;
+    font-size: 14px;
+}
+
+/* Preview Items */
+.preview-item {
+    display: flex;
+    gap: 12px;
+    padding: 12px;
+    border: 1px solid #E2E8F0;
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
+
+.preview-item:last-child {
+    margin-bottom: 0;
+}
+
+.preview-thumb {
+    width: 80px;
+    height: 60px;
+    border-radius: 6px;
+    background: #E2E8F0;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.preview-details {
+    flex: 1;
+    min-width: 0;
+}
+
+.preview-item-title {
+    font-weight: 500;
+    font-size: 14px;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.preview-item-desc {
+    font-size: 12px;
+    color: #64748B;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.preview-item-meta {
+    display: flex;
+    gap: 12px;
+    margin-top: 6px;
+    font-size: 11px;
+    color: #94A3B8;
+}
+
+.preview-badge {
+    display: inline-block;
+    padding: 2px 6px;
+    background: #EFF6FF;
+    color: #3B82F6;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 500;
+}
+
+.preview-badge.live {
+    background: #FEE2E2;
+    color: #DC2626;
+}
+
+.preview-badge.audio {
+    background: #F3E8FF;
+    color: #7C3AED;
+}
+
+/* Preview Group Header (for digest mode) */
+.preview-group {
+    margin-bottom: 20px;
+}
+
+.preview-group-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    background: #F3E8FF;
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
+
+.preview-group-icon {
+    font-size: 16px;
+}
+
+.preview-group-title {
+    font-weight: 600;
+    font-size: 14px;
+    color: #7C3AED;
+}
+
+/* RIGHT SIDEBAR */
+.sidebar-right {
+    background: white;
+    border-left: 1px solid #E2E8F0;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+}
+
+.provider-section {
+    padding: 12px;
+    background: #F8FAFC;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.provider-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.provider-icon {
+    font-size: 16px;
+}
+
+.provider-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #64748B;
+    letter-spacing: 0.5px;
+}
+
+.provider-select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #E2E8F0;
+    border-radius: 6px;
+    font-size: 14px;
+    background: white;
+}
+
+.provider-select:focus {
+    outline: none;
+    border-color: #3B82F6;
+}
+
+.variable-section {
+    margin-bottom: 20px;
+}
+
+.field-label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    color: #64748B;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+}
+
+.variable-input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #E2E8F0;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: 'Monaco', 'Menlo', monospace;
+}
+
+.variable-input:focus {
+    outline: none;
+    border-color: #3B82F6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.variable-hint {
+    display: block;
+    margin-top: 6px;
+    font-size: 11px;
+    color: #94A3B8;
+}
+
+/* OUTPUT TABS */
+.output-tabs {
+    display: flex;
+    gap: 4px;
+    padding: 4px;
+    background: #F1F5F9;
+    border-radius: 8px;
+    margin-bottom: 16px;
+}
+
+.output-tab {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    background: transparent;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #64748B;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.output-tab:hover {
+    color: #1E293B;
+}
+
+.output-tab.active {
+    background: white;
+    color: #1E293B;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* OUTPUT PANELS */
+.output-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    flex: 1;
+}
+
+.output-panel.hidden {
+    display: none;
+}
+
+/* CODE SECTIONS */
+.code-section {
+    display: flex;
+    flex-direction: column;
+}
+
+.code-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 12px;
+    background: #1E293B;
+    border-radius: 8px 8px 0 0;
+}
+
+.code-header span {
+    font-size: 11px;
+    font-weight: 600;
+    color: #94A3B8;
+    letter-spacing: 0.5px;
+}
+
+.copy-btn {
+    padding: 4px 10px;
+    background: #3B82F6;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.copy-btn:hover {
+    background: #2563EB;
+}
+
+.code-block {
+    padding: 16px;
+    background: #0F172A;
+    color: #E2E8F0;
+    border-radius: 0 0 8px 8px;
+    font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+    font-size: 12px;
+    line-height: 1.6;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-break: break-all;
+    min-height: 60px;
+}
+
+.code-block-small {
+    min-height: 40px;
+    font-size: 11px;
+}
+
+/* TEMPLATE LIST */
+.template-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 300px;
+    overflow-y: auto;
+    margin-bottom: 16px;
+}
+
+.template-item {
+    padding: 12px;
+    border: 1px solid #E2E8F0;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.template-item:hover {
+    border-color: #3B82F6;
+    background: #F8FAFC;
+}
+
+.template-item.active {
+    border-color: #3B82F6;
+    background: #EFF6FF;
+}
+
+.template-item.recommended {
+    border-color: #10B981;
+    background: linear-gradient(135deg, #ECFDF5 0%, #FFFFFF 100%);
+}
+
+.template-item.recommended:hover {
+    border-color: #059669;
+}
+
+.template-item.recommended.active {
+    border-color: #059669;
+    background: #ECFDF5;
+}
+
+.template-item .template-title {
+    font-weight: 500;
+    font-size: 14px;
+    margin-bottom: 2px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.template-item .template-desc {
+    font-size: 12px;
+    color: #64748B;
+}
+
+.template-recommended-badge {
+    display: inline-block;
+    padding: 2px 6px;
+    background: #10B981;
+    color: white;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 600;
+}
+
+/* TOAST */
+.toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    padding: 14px 20px;
+    background: #1E293B;
+    color: white;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    transform: translateY(100px);
+    opacity: 0;
+    transition: all 0.3s;
+    z-index: 1000;
+}
+
+.toast.show {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+/* RESPONSIVE */
+@media (max-width: 1200px) {
+    .app-layout {
+        grid-template-columns: 200px 1fr 300px;
+    }
+}
+
+@media (max-width: 1024px) {
+    .app-layout {
+        grid-template-columns: 1fr;
+    }
+    
+    .sidebar-left {
+        display: none;
+    }
+    
+    .sidebar-right {
+        border-left: none;
+        border-top: 1px solid #E2E8F0;
+    }
+}
+    </style>
+</head>
+<body>
+    <div class="app-layout">
+        
+        <!-- LEFT SIDEBAR -->
+        <aside class="sidebar-left">
+            <div class="logo">
+                <div class="logo-icon">SB</div>
+                <div class="logo-text">
+                    <span class="logo-title">SVP Builder</span>
+                    <span class="logo-subtitle">Braze Content Generator</span>
+                </div>
+            </div>
+            
+            <nav class="content-type-nav">
+                <div class="nav-label">CONTENT TYPE</div>
+                
+                <button class="nav-item active" data-type="live">
+                    <span class="nav-icon">📺</span>
+                    <span>Live Content</span>
+                </button>
+                
+                <button class="nav-item" data-type="sports">
+                    <span class="nav-icon">⚽</span>
+                    <span>Sports Events</span>
+                </button>
+                
+                <button class="nav-item" data-type="podcasts">
+                    <span class="nav-icon">🎙️</span>
+                    <span>Podcasts</span>
+                </button>
+                
+                <button class="nav-item" data-type="vod">
+                    <span class="nav-icon">🎬</span>
+                    <span>Video on Demand</span>
+                </button>
+                
+                <button class="nav-item" data-type="all">
+                    <span class="nav-icon">🎯</span>
+                    <span>All Content</span>
+                </button>
+            </nav>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="main-content">
+            
+            <header class="content-header">
+                <h1 id="content-title">Live Content</h1>
+                <p id="content-description">Fetch currently live streams and broadcasts</p>
+            </header>
+
+            <section class="preset-cards" id="preset-cards">
+                <!-- Dynamically populated -->
+            </section>
+
+            <!-- GENERAL FILTERS (shown for Live, Sports, VOD, All) -->
+            <section class="filters-section" id="general-filters">
+                <div class="filters-header">
+                    <h3>Filters</h3>
+                    <button class="reset-btn" id="reset-filters">Reset all</button>
+                </div>
+                
+                <div class="filters-grid">
+                    <div class="filter-group">
+                        <label class="filter-label">CATEGORY</label>
+                        <select class="filter-select" id="filter-category">
+                            <option value="">All Categories</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label class="filter-label">RESULTS</label>
+                        <input type="number" class="filter-input" id="filter-limit" value="10" min="1" max="100">
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label class="filter-label">SORT</label>
+                        <select class="filter-select" id="filter-sort">
+                            <option value="-published">Newest First</option>
+                            <option value="published">Oldest First</option>
+                            <option value="-flightTimes.start">Start Time (Latest)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="quick-tags" id="quick-tags">
+                    <button class="quick-tag" data-sport="football">Football</button>
+                    <button class="quick-tag" data-sport="hockey">Hockey</button>
+                    <button class="quick-tag" data-sport="handball">Handball</button>
+                    <button class="quick-tag" data-sport="basketball">Basketball</button>
+                </div>
+            </section>
+
+            <!-- PODCAST FILTERS (shown only for Podcasts) -->
+            <section class="filters-section podcast-filters hidden" id="podcast-filters">
+                <div class="filters-header">
+                    <h3>🎙️ Podcast Filters</h3>
+                    <button class="reset-btn" id="reset-podcast-filters">Reset all</button>
+                </div>
+
+                <!-- Mode Toggle -->
+                <div class="mode-toggle">
+                    <button class="mode-btn active" data-mode="single">
+                        <span class="mode-icon">🎧</span>
+                        <span>Single Podcast</span>
+                    </button>
+                    <button class="mode-btn" data-mode="digest">
+                        <span class="mode-icon">📰</span>
+                        <span>Weekly Digest</span>
+                    </button>
+                </div>
+
+                <!-- Mode Info -->
+                <div class="mode-info" id="mode-info">
+                    <div class="mode-info-icon">💡</div>
+                    <div class="mode-info-text">
+                        <strong>Single Podcast Mode:</strong> Fetch episodes from one podcast. Perfect for automated "new episode" emails.
+                    </div>
+                </div>
+                
+                <div class="filters-grid">
+                    <div class="filter-group">
+                        <label class="filter-label">CONTENT TYPE</label>
+                        <select class="filter-select" id="podcast-content-type">
+                            <option value="">All Content</option>
+                            <option value="episodes">Full Episodes Only</option>
+                            <option value="clips">Clips & Highlights</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label class="filter-label">ACCESS</label>
+                        <select class="filter-select" id="podcast-access">
+                            <option value="">All (Free & Paid)</option>
+                            <option value="free">Free Only</option>
+                            <option value="paid">Premium/Paid Only</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group" id="limit-group">
+                        <label class="filter-label">RESULTS</label>
+                        <input type="number" class="filter-input" id="podcast-limit" value="10" min="1" max="100">
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label class="filter-label">SORT BY</label>
+                        <select class="filter-select" id="podcast-sort">
+                            <option value="-published">Newest First</option>
+                            <option value="published">Oldest First</option>
+                            <option value="-duration">Longest First</option>
+                            <option value="duration">Shortest First</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group" id="date-filter-group">
+                        <label class="filter-label">RELEASED WITHIN</label>
+                        <select class="filter-select" id="podcast-date-filter">
+                            <option value="">Any Time</option>
+                            <option value="1">Last 24 Hours</option>
+                            <option value="7">Last 7 Days</option>
+                            <option value="14">Last 14 Days</option>
+                            <option value="30">Last 30 Days</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Podcast Series Selection -->
+                <div class="series-section">
+                    <div class="series-header">
+                        <label class="filter-label" id="series-label">SELECT PODCAST SERIES</label>
+                        <button class="fetch-series-btn" id="fetch-series">
+                            <span class="fetch-icon">🔄</span>
+                            Load Series
+                        </button>
+                    </div>
+                    <div class="series-list" id="series-list">
+                        <div class="series-empty">
+                            <p>Select a provider and click "Load Series" to discover podcasts</p>
+                        </div>
+                    </div>
+                    <div class="series-selected-count hidden" id="series-selected-count">
+                        <span id="selected-count-text">0 podcasts selected</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- PREVIEW SECTION -->
+            <section class="preview-section">
+                <div class="preview-header">
+                    <span class="preview-icon">📋</span>
+                    <span class="preview-title">Content Preview</span>
+                    <span class="preview-count" id="preview-count"></span>
+                    <button class="preview-btn" id="load-preview">Load Preview</button>
+                </div>
+                <div class="preview-content" id="preview-content">
+                    <div class="preview-empty">
+                        <div class="preview-empty-icon">🔍</div>
+                        <p>Click "Load Preview" to see what content your query will return</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- RIGHT SIDEBAR -->
+        <aside class="sidebar-right">
+            
+            <div class="provider-section">
+                <div class="provider-header">
+                    <span class="provider-icon">📡</span>
+                    <span class="provider-label">PROVIDER</span>
+                </div>
+                <select id="provider-select" class="provider-select">
+                    <option value="">Select Provider</option>
+                    <optgroup label="Norwegian">
+                        <option value="vgtv">VG / VGTV</option>
+                        <option value="ap">Aftenposten</option>
+                        <option value="bt">Bergens Tidende</option>
+                        <option value="aftenbladet">Stavanger Aftenblad</option>
+                        <option value="e24">E24</option>
+                    </optgroup>
+                    <optgroup label="Swedish">
+                        <option value="ab">Aftonbladet</option>
+                        <option value="svd">Svenska Dagbladet</option>
+                    </optgroup>
+                    <optgroup label="Audio">
+                        <option value="podme">Podme</option>
+                    </optgroup>
+                </select>
+            </div>
+
+            <div class="variable-section">
+                <label class="field-label">VARIABLE NAME</label>
+                <input type="text" id="variable-name" class="variable-input" value="content">
+                <small class="variable-hint" id="variable-hint"></small>
+            </div>
+
+            <div class="output-tabs">
+                <button class="output-tab active" data-tab="connected">Connected Content</button>
+                <button class="output-tab" data-tab="liquid">Liquid Templates</button>
+            </div>
+
+            <div class="output-panel" id="panel-connected">
+                <div class="code-section">
+                    <div class="code-header">
+                        <span>BRAZE CODE</span>
+                        <button class="copy-btn" data-target="braze-code">Copy</button>
+                    </div>
+                    <pre class="code-block" id="braze-code">Select a provider to begin...</pre>
+                </div>
+
+                <div class="code-section">
+                    <div class="code-header">
+                        <span>API URL</span>
+                        <button class="copy-btn" data-target="readable-url">Copy</button>
+                    </div>
+                    <pre class="code-block code-block-small" id="readable-url">https://svp.vg.no/...</pre>
+                </div>
+            </div>
+
+            <div class="output-panel hidden" id="panel-liquid">
+                <div class="template-list" id="template-list">
+                    <!-- Templates will be dynamically populated based on mode -->
+                </div>
+
+                <div class="code-section">
+                    <div class="code-header">
+                        <span>LIQUID CODE</span>
+                        <button class="copy-btn" data-target="liquid-code">Copy</button>
+                    </div>
+                    <pre class="code-block" id="liquid-code">Select a template above...</pre>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+// SVP Builder v6 - Content-Based Podcast Discovery
+document.addEventListener('DOMContentLoaded', function() {
+    
+    console.log('SVP Builder v6 loaded - Content-based discovery');
+    
+    // ============================================
+    // ELEMENT REFERENCES
+    // ============================================
+    
+    var navItems = document.querySelectorAll('.nav-item');
+    var contentTitle = document.getElementById('content-title');
+    var contentDescription = document.getElementById('content-description');
+    var presetCardsContainer = document.getElementById('preset-cards');
+    var quickTags = document.getElementById('quick-tags');
+    var outputTabs = document.querySelectorAll('.output-tab');
+    var panelConnected = document.getElementById('panel-connected');
+    var panelLiquid = document.getElementById('panel-liquid');
+    var templateList = document.getElementById('template-list');
+    var providerSelect = document.getElementById('provider-select');
+    var variableInput = document.getElementById('variable-name');
+    var variableHint = document.getElementById('variable-hint');
+    var brazeCode = document.getElementById('braze-code');
+    var readableUrl = document.getElementById('readable-url');
+    var liquidCode = document.getElementById('liquid-code');
+    var toast = document.getElementById('toast');
+    var resetFilters = document.getElementById('reset-filters');
+    
+    // General filters
+    var filterCategory = document.getElementById('filter-category');
+    var filterLimit = document.getElementById('filter-limit');
+    var filterSort = document.getElementById('filter-sort');
+    
+    // Podcast filters
+    var generalFilters = document.getElementById('general-filters');
+    var podcastFilters = document.getElementById('podcast-filters');
+    var podcastContentType = document.getElementById('podcast-content-type');
+    var podcastAccess = document.getElementById('podcast-access');
+    var podcastLimit = document.getElementById('podcast-limit');
+    var podcastSort = document.getElementById('podcast-sort');
+    var podcastDateFilter = document.getElementById('podcast-date-filter');
+    var fetchSeriesBtn = document.getElementById('fetch-series');
+    var seriesList = document.getElementById('series-list');
+    var seriesLabel = document.getElementById('series-label');
+    var seriesSelectedCount = document.getElementById('series-selected-count');
+    var selectedCountText = document.getElementById('selected-count-text');
+    var resetPodcastFilters = document.getElementById('reset-podcast-filters');
+    var modeInfo = document.getElementById('mode-info');
+    
+    // Mode toggle
+    var modeBtns = document.querySelectorAll('.mode-btn');
+    
+    // Preview
+    var loadPreviewBtn = document.getElementById('load-preview');
+    var previewContent = document.getElementById('preview-content');
+    var previewCount = document.getElementById('preview-count');
+    
+    // ============================================
+    // CONTENT TYPE CONFIGURATIONS
+    // ============================================
+    
+    var contentTypes = {
+        live: {
+            title: 'Live Content',
+            description: 'Fetch currently live streams and broadcasts',
+            filter: 'streamType::live',
+            showTags: false,
+            presets: [
+                { icon: '🔴', title: 'All Live Now', desc: 'Everything currently streaming', preset: 'all' },
+                { icon: '🔄', title: 'Recently Ended', desc: 'Last 24 hours', preset: 'recent' },
+                { icon: '📅', title: 'Starting Soon', desc: 'Next 3 hours', preset: 'soon' }
+            ]
+        },
+        sports: {
+            title: 'Sports Events',
+            description: 'Live and upcoming sports matches',
+            filter: 'streamType::live',
+            showTags: true,
+            presets: [
+                { icon: '⚽', title: 'All Sports', desc: 'Every sport type', preset: 'all' },
+                { icon: '🔴', title: 'Live Now', desc: 'Currently playing', preset: 'live' },
+                { icon: '📅', title: 'Today\'s Matches', desc: 'All matches today', preset: 'today' },
+                { icon: '📆', title: 'This Week', desc: 'Next 7 days', preset: 'week' }
+            ]
+        },
+        podcasts: {
+            title: 'Podcasts',
+            description: 'Audio podcasts and episodes',
+            filter: 'assetType::audio',
+            showTags: false,
+            presets: [
+                { icon: '📬', title: 'Latest Episode', desc: 'For scheduled sends', preset: 'latest-single', featured: true, badge: 'AUTOMATED' },
+                { icon: '📰', title: 'Weekly Digest', desc: 'Multiple podcasts', preset: 'weekly-digest', featured: true, badge: 'AUTOMATED' },
+                { icon: '🎙️', title: 'Recent Episodes', desc: 'Newest first', preset: 'latest' },
+                { icon: '📻', title: 'Full Episodes', desc: 'Episodes only', preset: 'episodes' }
+            ]
+        },
+        vod: {
+            title: 'Video on Demand',
+            description: 'Recorded video content and replays',
+            filter: 'streamType::vod',
+            showTags: false,
+            presets: [
+                { icon: '🎬', title: 'Latest Videos', desc: 'Most recent uploads', preset: 'latest' },
+                { icon: '🔥', title: 'Trending', desc: 'Most viewed', preset: 'trending' },
+                { icon: '🏆', title: 'Sports Highlights', desc: 'Match replays', preset: 'sports' }
+            ]
+        },
+        all: {
+            title: 'All Content',
+            description: 'Search across all content types',
+            filter: '',
+            showTags: false,
+            presets: [
+                { icon: '🎯', title: 'Everything', desc: 'No filters applied', preset: 'all' },
+                { icon: '📅', title: 'Recent', desc: 'Last 7 days', preset: 'recent' },
+                { icon: '⭐', title: 'Featured', desc: 'Editor picks', preset: 'featured' }
+            ]
+        }
+    };
+    
+    // ============================================
+    // LIQUID TEMPLATES
+    // ============================================
+    
+    var templates = {
+        single: [
+            {
+                id: 'single-episode-card',
+                title: 'Single Episode Card',
+                desc: 'Perfect for "new episode" emails',
+                recommended: true,
+                code: '{% if VAR._embedded.assets.size > 0 %}\n{% assign episode = VAR._embedded.assets[0] %}\n<div style="border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden; max-width: 500px;">\n  <img src="{{episode.images.main}}?t[]=500x280q80" style="width: 100%; display: block;">\n  <div style="padding: 20px;">\n    <p style="margin: 0 0 8px 0; color: #6b7280; font-size: 14px;">🎙️ New Episode</p>\n    <h2 style="margin: 0 0 12px 0; font-size: 20px; color: #111827;">{{episode.title}}</h2>\n    <p style="margin: 0 0 16px 0; color: #4b5563; font-size: 15px; line-height: 1.5;">{{episode.description | truncate: 150}}</p>\n    <p style="margin: 0; color: #9ca3af; font-size: 13px;">⏱️ {{episode.duration | divided_by: 60000}} min</p>\n  </div>\n</div>\n{% else %}\n<p>No new episodes available.</p>\n{% endif %}'
+            },
+            {
+                id: 'single-simple',
+                title: 'Simple Text',
+                desc: 'Title and description only',
+                code: '{% if VAR._embedded.assets.size > 0 %}\n{% assign item = VAR._embedded.assets[0] %}\n<h2>{{item.title}}</h2>\n<p>{{item.description}}</p>\n{% endif %}'
+            },
+            {
+                id: 'single-with-image',
+                title: 'With Image',
+                desc: 'Card layout with thumbnail',
+                code: '{% if VAR._embedded.assets.size > 0 %}\n{% assign item = VAR._embedded.assets[0] %}\n<div style="border: 1px solid #ddd; border-radius: 8px; overflow: hidden;">\n  <img src="{{item.images.main}}?t[]=480x270q80" style="width: 100%;">\n  <div style="padding: 16px;">\n    <h2>{{item.title}}</h2>\n    <p>{{item.description}}</p>\n  </div>\n</div>\n{% endif %}'
+            }
+        ],
+        list: [
+            {
+                id: 'list-cards',
+                title: 'Card List',
+                desc: 'Visual cards with images',
+                code: '{% for item in VAR._embedded.assets %}\n<div style="display: flex; gap: 12px; margin-bottom: 16px; padding: 12px; border: 1px solid #eee; border-radius: 8px;">\n  <img src="{{item.images.main}}?t[]=80x80q80" style="width: 60px; height: 60px; border-radius: 8px; object-fit: cover;">\n  <div>\n    <h4 style="margin: 0 0 4px 0;">{{item.title}}</h4>\n    <p style="margin: 0; color: #666; font-size: 14px;">{{item.category.title}}</p>\n    <small style="color: #999;">{{item.duration | divided_by: 60000}} min</small>\n  </div>\n</div>\n{% endfor %}'
+            },
+            {
+                id: 'list-simple',
+                title: 'Simple List',
+                desc: 'Bullet points',
+                code: '<ul>\n{% for item in VAR._embedded.assets %}\n  <li>{{item.title}}</li>\n{% endfor %}\n</ul>'
+            },
+            {
+                id: 'list-detailed',
+                title: 'Detailed List',
+                desc: 'With descriptions and dates',
+                code: '{% for item in VAR._embedded.assets %}\n<div style="margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid #eee;">\n  <h3 style="margin: 0 0 8px 0;">{{item.title}}</h3>\n  <p style="margin: 0 0 8px 0; color: #666;">{{item.description | truncate: 120}}</p>\n  <small style="color: #999;">{{item.published | date: "%b %d, %Y"}}</small>\n</div>\n{% endfor %}'
+            }
+        ],
+        digest: [
+            {
+                id: 'digest-combined',
+                title: 'Weekly Digest',
+                desc: 'All podcasts in one list',
+                recommended: true,
+                code: '<!-- DIGEST_TEMPLATE -->'
+            },
+            {
+                id: 'digest-grouped',
+                title: 'Grouped by Podcast',
+                desc: 'Separate sections per podcast',
+                code: '<!-- DIGEST_GROUPED_TEMPLATE -->'
+            }
+        ],
+        fallback: [
+            {
+                id: 'with-fallback',
+                title: 'With Fallback',
+                desc: 'Shows message if no content',
+                code: '{% if VAR._embedded.assets.size > 0 %}\n  {% for item in VAR._embedded.assets %}\n    <div style="margin-bottom: 16px;">\n      <h3>{{item.title}}</h3>\n      <p>{{item.description}}</p>\n    </div>\n  {% endfor %}\n{% else %}\n  <p>No content available at this time. Check back soon!</p>\n{% endif %}'
+            }
+        ]
+    };
+    
+    // ============================================
+    // CURRENT STATE
+    // ============================================
+    
+    var currentContentType = 'live';
+    var currentMode = 'single';
+    var currentTemplate = null;
+    var selectedSeries = [];
+    var seriesData = [];
+    
+    // ============================================
+    // NAVIGATION HANDLING
+    // ============================================
+    
+    navItems.forEach(function(item) {
+        item.addEventListener('click', function() {
+            var type = this.dataset.type;
+            
+            navItems.forEach(function(nav) {
+                nav.classList.remove('active');
+            });
+            this.classList.add('active');
+            
+            currentContentType = type;
+            var config = contentTypes[type];
+            
+            contentTitle.textContent = config.title;
+            contentDescription.textContent = config.description;
+            
+            renderPresetCards(config.presets);
+            
+            if (type === 'podcasts') {
+                generalFilters.classList.add('hidden');
+                podcastFilters.classList.remove('hidden');
+            } else {
+                generalFilters.classList.remove('hidden');
+                podcastFilters.classList.add('hidden');
+            }
+            
+            if (config.showTags) {
+                quickTags.classList.add('visible');
+            } else {
+                quickTags.classList.remove('visible');
+            }
+            
+            selectedSeries = [];
+            currentMode = 'single';
+            updateModeUI();
+            clearPreview();
+            updateGeneratedCode();
+            renderTemplateList();
+        });
+    });
+    
+    // ============================================
+    // MODE TOGGLE (Single / Digest)
+    // ============================================
+    
+    modeBtns.forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            modeBtns.forEach(function(b) { b.classList.remove('active'); });
+            this.classList.add('active');
+            
+            currentMode = this.dataset.mode;
+            updateModeUI();
+            updateGeneratedCode();
+            renderTemplateList();
+        });
+    });
+    
+    function updateModeUI() {
+        if (currentMode === 'digest') {
+            modeInfo.innerHTML = '<div class="mode-info-icon">📰</div><div class="mode-info-text"><strong>Digest Mode:</strong> Select multiple podcasts to create a "released this week" roundup. Each podcast gets its own API call.</div>';
+            seriesLabel.textContent = 'SELECT PODCASTS (Multi-select)';
+            podcastLimit.value = 1;
+            variableHint.textContent = 'In digest mode, variables are auto-named: podcast_1, podcast_2, etc.';
+            seriesSelectedCount.classList.remove('hidden');
+            updateSelectedCount();
+        } else {
+            modeInfo.innerHTML = '<div class="mode-info-icon">💡</div><div class="mode-info-text"><strong>Single Podcast Mode:</strong> Fetch episodes from one podcast. Perfect for automated "new episode" emails.</div>';
+            seriesLabel.textContent = 'SELECT PODCAST SERIES';
+            variableHint.textContent = '';
+            seriesSelectedCount.classList.add('hidden');
+        }
+        
+        if (seriesData.length > 0) {
+            renderSeriesList(seriesData);
+        }
+    }
+    
+    function updateSelectedCount() {
+        var count = selectedSeries.length;
+        selectedCountText.textContent = count + ' podcast' + (count !== 1 ? 's' : '') + ' selected';
+    }
+    
+    // ============================================
+    // PRESET CARDS
+    // ============================================
+    
+    function renderPresetCards(presets) {
+        var html = '';
+        presets.forEach(function(preset, index) {
+            var activeClass = index === 0 ? ' active' : '';
+            var featuredClass = preset.featured ? ' featured' : '';
+            
+            html += '<div class="preset-card' + activeClass + featuredClass + '" data-preset="' + preset.preset + '">';
+            html += '<div class="preset-icon">' + preset.icon + '</div>';
+            html += '<div class="preset-title">' + preset.title + '</div>';
+            html += '<div class="preset-desc">' + preset.desc + '</div>';
+            if (preset.badge) {
+                html += '<div class="preset-badge">' + preset.badge + '</div>';
+            }
+            html += '</div>';
+        });
+        presetCardsContainer.innerHTML = html;
+        
+        var cards = presetCardsContainer.querySelectorAll('.preset-card');
+        cards.forEach(function(card) {
+            card.addEventListener('click', function() {
+                cards.forEach(function(c) { c.classList.remove('active'); });
+                this.classList.add('active');
+                
+                var preset = this.dataset.preset;
+                applyPreset(preset);
+                updateGeneratedCode();
+            });
+        });
+    }
+    
+    function applyPreset(preset) {
+        if (currentContentType !== 'podcasts') return;
+        
+        podcastContentType.value = '';
+        podcastAccess.value = '';
+        podcastSort.value = '-published';
+        podcastDateFilter.value = '';
+        
+        switch(preset) {
+            case 'latest-single':
+                currentMode = 'single';
+                podcastLimit.value = 1;
+                podcastSort.value = '-published';
+                updateModeToggle('single');
+                showToast('Set to fetch 1 latest episode - perfect for scheduled sends!');
+                break;
+                
+            case 'weekly-digest':
+                currentMode = 'digest';
+                podcastLimit.value = 1;
+                podcastDateFilter.value = '7';
+                updateModeToggle('digest');
+                showToast('Digest mode enabled - select multiple podcasts below');
+                break;
+                
+            case 'episodes':
+                podcastContentType.value = 'episodes';
+                break;
+                
+            case 'latest':
+                podcastLimit.value = 10;
+                break;
+        }
+        
+        updateModeUI();
+        renderTemplateList();
+    }
+    
+    function updateModeToggle(mode) {
+        modeBtns.forEach(function(btn) {
+            btn.classList.toggle('active', btn.dataset.mode === mode);
+        });
+    }
+    
+    // ============================================
+    // TEMPLATE LIST
+    // ============================================
+    
+    function renderTemplateList() {
+        var html = '';
+        var templateGroups = [];
+        
+        if (currentContentType === 'podcasts') {
+            if (currentMode === 'digest') {
+                templateGroups = [
+                    { name: 'Digest Templates', templates: templates.digest },
+                    { name: 'With Fallback', templates: templates.fallback }
+                ];
+            } else {
+                templateGroups = [
+                    { name: 'Single Episode', templates: templates.single },
+                    { name: 'Episode Lists', templates: templates.list },
+                    { name: 'With Fallback', templates: templates.fallback }
+                ];
+            }
+        } else {
+            templateGroups = [
+                { name: 'Single Item', templates: templates.single },
+                { name: 'Lists', templates: templates.list },
+                { name: 'With Fallback', templates: templates.fallback }
+            ];
+        }
+        
+        templateGroups.forEach(function(group) {
+            group.templates.forEach(function(tmpl, index) {
+                var isFirst = index === 0 && group === templateGroups[0];
+                var activeClass = isFirst ? ' active' : '';
+                var recommendedClass = tmpl.recommended ? ' recommended' : '';
+                
+                if (isFirst) {
+                    currentTemplate = tmpl;
+                }
+                
+                html += '<div class="template-item' + activeClass + recommendedClass + '" data-template-id="' + tmpl.id + '">';
+                html += '<div class="template-title">' + tmpl.title;
+                if (tmpl.recommended) {
+                    html += ' <span class="template-recommended-badge">RECOMMENDED</span>';
+                }
+                html += '</div>';
+                html += '<div class="template-desc">' + tmpl.desc + '</div>';
+                html += '</div>';
+            });
+        });
+        
+        templateList.innerHTML = html;
+        
+        var items = templateList.querySelectorAll('.template-item');
+        items.forEach(function(item) {
+            item.addEventListener('click', function() {
+                items.forEach(function(i) { i.classList.remove('active'); });
+                this.classList.add('active');
+                
+                var templateId = this.dataset.templateId;
+                currentTemplate = findTemplateById(templateId);
+                updateLiquidCode();
+            });
+        });
+        
+        updateLiquidCode();
+    }
+    
+    function findTemplateById(id) {
+        var allTemplates = [].concat(
+            templates.single,
+            templates.list,
+            templates.digest,
+            templates.fallback
+        );
+        return allTemplates.find(function(t) { return t.id === id; }) || allTemplates[0];
+    }
+    
+    function updateLiquidCode() {
+        if (!currentTemplate) return;
+        
+        var varName = variableInput.value || 'content';
+        var code = currentTemplate.code;
+        
+        if (currentMode === 'digest' && selectedSeries.length > 0) {
+            code = generateDigestTemplate();
+        } else {
+            code = code.replace(/VAR/g, varName);
+        }
+        
+        liquidCode.textContent = code;
+    }
+    
+    function generateDigestTemplate() {
+        if (selectedSeries.length === 0) {
+            return '<!-- Select podcasts to generate digest template -->';
+        }
+        
+        var isGrouped = currentTemplate && currentTemplate.id === 'digest-grouped';
+        var code = '';
+        
+        if (isGrouped) {
+            selectedSeries.forEach(function(series, index) {
+                var varName = 'podcast_' + (index + 1);
+                code += '<!-- ' + series.title + ' -->\n';
+                code += '{% if ' + varName + '._embedded.assets.size > 0 %}\n';
+                code += '<div style="margin-bottom: 24px;">\n';
+                code += '  <h3 style="margin: 0 0 12px 0; color: #7c3aed;">🎙️ ' + series.title + '</h3>\n';
+                code += '  {% assign episode = ' + varName + '._embedded.assets[0] %}\n';
+                code += '  <div style="display: flex; gap: 12px; padding: 12px; border: 1px solid #e5e7eb; border-radius: 8px;">\n';
+                code += '    <img src="{{episode.images.main}}?t[]=80x80q80" style="width: 60px; height: 60px; border-radius: 8px;">\n';
+                code += '    <div>\n';
+                code += '      <h4 style="margin: 0 0 4px 0;">{{episode.title}}</h4>\n';
+                code += '      <p style="margin: 0; color: #666; font-size: 14px;">{{episode.duration | divided_by: 60000}} min</p>\n';
+                code += '    </div>\n';
+                code += '  </div>\n';
+                code += '</div>\n';
+                code += '{% endif %}\n\n';
+            });
+        } else {
+            code += '<h2 style="margin: 0 0 16px 0;">🎧 This Week\'s Episodes</h2>\n\n';
+            
+            selectedSeries.forEach(function(series, index) {
+                var varName = 'podcast_' + (index + 1);
+                code += '{% if ' + varName + '._embedded.assets.size > 0 %}\n';
+                code += '{% assign episode = ' + varName + '._embedded.assets[0] %}\n';
+                code += '<div style="display: flex; gap: 12px; margin-bottom: 16px; padding: 12px; border: 1px solid #e5e7eb; border-radius: 8px;">\n';
+                code += '  <img src="{{episode.images.main}}?t[]=80x80q80" style="width: 60px; height: 60px; border-radius: 8px;">\n';
+                code += '  <div>\n';
+                code += '    <p style="margin: 0 0 4px 0; color: #7c3aed; font-size: 12px; font-weight: 600;">' + series.title + '</p>\n';
+                code += '    <h4 style="margin: 0 0 4px 0;">{{episode.title}}</h4>\n';
+                code += '    <p style="margin: 0; color: #666; font-size: 14px;">{{episode.duration | divided_by: 60000}} min</p>\n';
+                code += '  </div>\n';
+                code += '</div>\n';
+                code += '{% endif %}\n\n';
+            });
+        }
+        
+        return code;
+    }
+    
+    // ============================================
+    // QUICK TAGS (Sports)
+    // ============================================
+    
+    var quickTagButtons = document.querySelectorAll('.quick-tag');
+    quickTagButtons.forEach(function(tag) {
+        tag.addEventListener('click', function() {
+            this.classList.toggle('active');
+            updateGeneratedCode();
+        });
+    });
+    
+    // ============================================
+    // OUTPUT TABS
+    // ============================================
+    
+    outputTabs.forEach(function(tab) {
+        tab.addEventListener('click', function() {
+            outputTabs.forEach(function(t) { t.classList.remove('active'); });
+            this.classList.add('active');
+            
+            var tabName = this.dataset.tab;
+            if (tabName === 'connected') {
+                panelConnected.classList.remove('hidden');
+                panelLiquid.classList.add('hidden');
+            } else {
+                panelConnected.classList.add('hidden');
+                panelLiquid.classList.remove('hidden');
+            }
+        });
+    });
+    
+    // ============================================
+    // URL GENERATION
+    // ============================================
+    
+    function buildUrl(seriesId) {
+        var provider = providerSelect.value;
+        if (!provider) return null;
+        
+        var baseUrl = 'https://svp.vg.no/svp/api/v1/' + provider;
+        var filters = [];
+        var params = ['appName=braze_content'];
+        
+        if (currentContentType === 'podcasts') {
+            baseUrl += '/search';
+            filters.push('assetType::audio');
+            
+            if (podcastContentType.value === 'episodes') {
+                filters.push('series.episodeNumber>0');
+            } else if (podcastContentType.value === 'clips') {
+                filters.push('duration<300000');
+            }
+            
+            if (podcastAccess.value === 'free') {
+                filters.push('additional.access.free::true');
+            } else if (podcastAccess.value === 'paid') {
+                filters.push('additional.access.free::false');
+            }
+            
+            if (podcastDateFilter.value) {
+                var days = parseInt(podcastDateFilter.value);
+                var since = Date.now() - (days * 24 * 60 * 60 * 1000);
+                filters.push('published>' + since);
+            }
+            
+            if (seriesId) {
+                filters.push('categoryId::' + seriesId);
+            }
+            
+            params.push('limit=' + (podcastLimit.value || 10));
+            params.push('sort=' + podcastSort.value);
+            params.push('additional=settings,metadata,access');
+            
+        } else {
+            baseUrl += '/search';
+            var config = contentTypes[currentContentType];
+            
+            if (config.filter) {
+                filters.push(config.filter);
+            }
+            
+            if (filterCategory.value) {
+                filters.push('categoryId::' + filterCategory.value);
+            }
+            
+            if (currentContentType === 'sports') {
+                var activeTags = document.querySelectorAll('.quick-tag.active');
+                if (activeTags.length > 0) {
+                    var sports = [];
+                    activeTags.forEach(function(tag) {
+                        sports.push(tag.dataset.sport);
+                    });
+                    filters.push('additional.metadata.sportType<>' + sports.join(','));
+                }
+            }
+            
+            params.push('limit=' + (filterLimit.value || 10));
+            params.push('sort=' + filterSort.value);
+            params.push('additional=settings,metadata');
+        }
+        
+        if (filters.length > 0) {
+            params.push('filter=' + filters.join('|'));
+        }
+        
+        return baseUrl + '?' + params.join('&');
+    }
+    
+    function updateGeneratedCode() {
+        var provider = providerSelect.value;
+        var varName = variableInput.value || 'content';
+        
+        if (!provider) {
+            brazeCode.textContent = 'Select a provider to begin...';
+            readableUrl.textContent = 'https://svp.vg.no/...';
+            return;
+        }
+        
+        if (currentContentType === 'podcasts' && currentMode === 'digest' && selectedSeries.length > 0) {
+            var code = '';
+            var urls = [];
+            
+            selectedSeries.forEach(function(series, index) {
+                var seriesVarName = 'podcast_' + (index + 1);
+                var url = buildUrl(series.id);
+                urls.push(url);
+                code += '{% connected_content ' + url + ' :save ' + seriesVarName + ' %}\n';
+            });
+            
+            brazeCode.textContent = code.trim();
+            readableUrl.textContent = 'Multiple API calls:\n\n' + urls.map(function(u, i) {
+                return (i + 1) + '. ' + decodeURIComponent(u);
+            }).join('\n\n');
+            
+        } else {
+            var seriesId = currentMode === 'single' && selectedSeries.length > 0 
+                ? selectedSeries[0].id 
+                : null;
+            var url = buildUrl(seriesId);
+            
+            if (!url) return;
+            
+            brazeCode.textContent = '{% connected_content ' + url + ' :save ' + varName + ' %}';
+            readableUrl.textContent = decodeURIComponent(url);
+        }
+        
+        updateLiquidCode();
+    }
+    
+    // ============================================
+    // FETCH PODCAST SERIES (Content-Based Discovery)
+    // ============================================
+    
+    fetchSeriesBtn.addEventListener('click', function() {
+        var provider = providerSelect.value;
+        if (!provider) {
+            showToast('Please select a provider first');
+            return;
+        }
+        
+        fetchSeriesBtn.disabled = true;
+        fetchSeriesBtn.classList.add('loading');
+        fetchSeriesBtn.innerHTML = '<span class="fetch-icon">🔄</span> Discovering...';
+        
+        discoverPodcastsFromContent(provider)
+            .then(function(podcasts) {
+                seriesData = podcasts;
+                renderSeriesList(seriesData);
+                showToast('Found ' + podcasts.length + ' podcasts with content');
+            })
+            .catch(function(error) {
+                console.error('Error discovering podcasts:', error);
+                seriesList.innerHTML = '<div class="series-empty"><p>Failed to load podcasts. Try again.</p></div>';
+            })
+            .finally(function() {
+                fetchSeriesBtn.disabled = false;
+                fetchSeriesBtn.classList.remove('loading');
+                fetchSeriesBtn.innerHTML = '<span class="fetch-icon">🔄</span> Load Series';
+            });
+    });
+    
+    function discoverPodcastsFromContent(provider) {
+        return new Promise(function(resolve, reject) {
+            var allAssets = [];
+            var page = 1;
+            var maxPages = 15;
+            
+            function fetchPage() {
+                var url = 'https://svp.vg.no/svp/api/v1/' + provider + '/search?appName=braze_content&limit=100&filter=assetType::audio&additional=settings,metadata&page=' + page;
+                
+                console.log('Fetching page ' + page + '...');
+                
+                fetch(url)
+                    .then(function(response) {
+                        if (!response.ok) throw new Error('API error: ' + response.status);
+                        return response.json();
+                    })
+                    .then(function(data) {
+                        var assets = data._embedded && data._embedded.assets ? data._embedded.assets : [];
+                        
+                        console.log('Page ' + page + ': got ' + assets.length + ' assets');
+                        
+                        if (assets.length === 0 || page >= maxPages) {
+                            var podcasts = extractUniquePodcasts(allAssets);
+                            resolve(podcasts);
+                        } else {
+                            allAssets = allAssets.concat(assets);
+                            page++;
+                            fetchPage();
+                        }
+                    })
+                    .catch(reject);
+            }
+            
+            fetchPage();
+        });
+    }
+    
+    function extractUniquePodcasts(assets) {
+        var categoryMap = {};
+        
+        assets.forEach(function(asset) {
+            if (asset.category && asset.category.id) {
+                var catId = asset.category.id;
+                
+                if (!categoryMap[catId]) {
+                    categoryMap[catId] = {
+                        id: catId,
+                        title: asset.category.title || 'Unknown',
+                        episodeCount: 0,
+                        latestPublished: 0,
+                        additional: asset.category.additional || {}
+                    };
+                }
+                
+                categoryMap[catId].episodeCount++;
+                
+                if (asset.published && asset.published > categoryMap[catId].latestPublished) {
+                    categoryMap[catId].latestPublished = asset.published;
+                }
+            }
+        });
+        
+        var podcasts = Object.values(categoryMap);
+        podcasts.sort(function(a, b) {
+            return b.episodeCount - a.episodeCount;
+        });
+        
+        console.log('Discovered ' + podcasts.length + ' podcasts from ' + assets.length + ' audio assets');
+        
+        return podcasts;
+    }
+    
+    function renderSeriesList(categories) {
+        if (!categories || categories.length === 0) {
+            seriesList.innerHTML = '<div class="series-empty"><p>No podcasts found for this provider</p></div>';
+            return;
+        }
+        
+        var inputType = currentMode === 'digest' ? 'checkbox' : 'radio';
+        var html = '';
+        
+        if (currentMode === 'single') {
+            var isAllSelected = selectedSeries.length === 0;
+            html += '<div class="series-item' + (isAllSelected ? ' selected' : '') + '" data-id="" data-title="All Series">';
+            html += '<input type="radio" name="series" value="" ' + (isAllSelected ? 'checked' : '') + '>';
+            html += '<div class="series-info">';
+            html += '<div class="series-title">All Podcasts</div>';
+            html += '<div class="series-meta">Show episodes from all podcasts</div>';
+            html += '</div></div>';
+        }
+        
+        categories.forEach(function(cat) {
+            var isSelected = selectedSeries.some(function(s) { return s.id === cat.id; });
+            var episodeText = cat.episodeCount + ' episode' + (cat.episodeCount !== 1 ? 's' : '');
+            
+            html += '<div class="series-item' + (isSelected ? ' selected' : '') + '" data-id="' + cat.id + '" data-title="' + escapeHtml(cat.title) + '">';
+            html += '<input type="' + inputType + '" name="series" value="' + cat.id + '" ' + (isSelected ? 'checked' : '') + '>';
+            html += '<div class="series-info">';
+            html += '<div class="series-title">' + escapeHtml(cat.title) + '</div>';
+            html += '<div class="series-meta">' + episodeText + '</div>';
+            html += '</div></div>';
+        });
+        
+        seriesList.innerHTML = html;
+        
+        var items = seriesList.querySelectorAll('.series-item');
+        items.forEach(function(item) {
+            item.addEventListener('click', function(e) {
+                var id = this.dataset.id;
+                var title = this.dataset.title;
+                var checkbox = this.querySelector('input');
+                
+                if (currentMode === 'digest') {
+                    if (id) {
+                        checkbox.checked = !checkbox.checked;
+                        this.classList.toggle('selected', checkbox.checked);
+                        
+                        if (checkbox.checked) {
+                            selectedSeries.push({ id: id, title: title });
+                        } else {
+                            selectedSeries = selectedSeries.filter(function(s) { return s.id !== id; });
+                        }
+                        
+                        updateSelectedCount();
+                    }
+                } else {
+                    items.forEach(function(i) { i.classList.remove('selected'); });
+                    this.classList.add('selected');
+                    checkbox.checked = true;
+                    
+                    if (id) {
+                        selectedSeries = [{ id: id, title: title }];
+                    } else {
+                        selectedSeries = [];
+                    }
+                    
+                    showToast(id ? 'Selected: ' + title : 'Showing all podcasts');
+                }
+                
+                updateGeneratedCode();
+            });
+        });
+    }
+    
+    // ============================================
+    // PREVIEW
+    // ============================================
+    
+    loadPreviewBtn.addEventListener('click', function() {
+        var provider = providerSelect.value;
+        if (!provider) {
+            showToast('Please select a provider first');
+            return;
+        }
+        
+        loadPreviewBtn.disabled = true;
+        loadPreviewBtn.classList.add('loading');
+        loadPreviewBtn.textContent = 'Loading...';
+        previewContent.innerHTML = '<div class="preview-empty"><div class="preview-empty-icon">⏳</div><p>Fetching content...</p></div>';
+        
+        if (currentMode === 'digest' && selectedSeries.length > 0) {
+            var promises = selectedSeries.map(function(series) {
+                var url = buildUrl(series.id);
+                return fetch(url)
+                    .then(function(r) { return r.json(); })
+                    .then(function(data) {
+                        return { series: series, data: data };
+                    });
+            });
+            
+            Promise.all(promises)
+                .then(function(results) {
+                    renderDigestPreview(results);
+                })
+                .catch(function(error) {
+                    console.error('Preview error:', error);
+                    previewContent.innerHTML = '<div class="preview-error">Failed to load preview.</div>';
+                })
+                .finally(function() {
+                    loadPreviewBtn.disabled = false;
+                    loadPreviewBtn.classList.remove('loading');
+                    loadPreviewBtn.textContent = 'Load Preview';
+                });
+        } else {
+            var seriesId = selectedSeries.length > 0 ? selectedSeries[0].id : null;
+            var url = buildUrl(seriesId);
+            
+            fetch(url)
+                .then(function(response) {
+                    if (!response.ok) throw new Error('API request failed');
+                    return response.json();
+                })
+                .then(function(data) {
+                    renderPreview(data);
+                })
+                .catch(function(error) {
+                    console.error('Preview error:', error);
+                    previewContent.innerHTML = '<div class="preview-error">Failed to load preview.</div>';
+                    previewCount.textContent = '';
+                })
+                .finally(function() {
+                    loadPreviewBtn.disabled = false;
+                    loadPreviewBtn.classList.remove('loading');
+                    loadPreviewBtn.textContent = 'Load Preview';
+                });
+        }
+    });
+    
+    function renderPreview(data) {
+        var assets = data._embedded && data._embedded.assets ? data._embedded.assets : [];
+        
+        if (assets.length === 0) {
+            previewContent.innerHTML = '<div class="preview-empty"><div class="preview-empty-icon">📭</div><p>No content found matching your filters</p></div>';
+            previewCount.textContent = '0 results';
+            return;
+        }
+        
+        previewCount.textContent = assets.length + ' result' + (assets.length !== 1 ? 's' : '');
+        previewContent.innerHTML = renderAssetList(assets);
+    }
+    
+    function renderDigestPreview(results) {
+        var totalCount = 0;
+        var html = '';
+        
+        results.forEach(function(result) {
+            var assets = result.data._embedded && result.data._embedded.assets ? result.data._embedded.assets : [];
+            totalCount += assets.length;
+            
+            html += '<div class="preview-group">';
+            html += '<div class="preview-group-header">';
+            html += '<span class="preview-group-icon">🎙️</span>';
+            html += '<span class="preview-group-title">' + escapeHtml(result.series.title) + '</span>';
+            html += '</div>';
+            
+            if (assets.length > 0) {
+                html += renderAssetList(assets);
+            } else {
+                html += '<div class="preview-empty" style="padding: 12px;"><p style="font-size: 13px;">No recent episodes</p></div>';
+            }
+            
+            html += '</div>';
+        });
+        
+        previewCount.textContent = totalCount + ' total episode' + (totalCount !== 1 ? 's' : '') + ' from ' + results.length + ' podcasts';
+        previewContent.innerHTML = html;
+    }
+    
+    function renderAssetList(assets) {
+        var html = '';
+        
+        assets.forEach(function(asset) {
+            var imageUrl = asset.images && asset.images.main 
+                ? asset.images.main + '?t[]=160x90q80' 
+                : '';
+            
+            var duration = asset.duration 
+                ? Math.floor(asset.duration / 60000) + ' min' 
+                : '';
+            
+            var badge = '';
+            if (asset.streamType === 'live') {
+                badge = '<span class="preview-badge live">LIVE</span>';
+            } else if (asset.assetType === 'audio') {
+                badge = '<span class="preview-badge audio">AUDIO</span>';
+            }
+            
+            html += '<div class="preview-item">';
+            if (imageUrl) {
+                html += '<img src="' + imageUrl + '" class="preview-thumb" alt="">';
+            }
+            html += '<div class="preview-details">';
+            html += '<div class="preview-item-title">' + escapeHtml(asset.title) + '</div>';
+            if (asset.description) {
+                html += '<div class="preview-item-desc">' + escapeHtml(asset.description) + '</div>';
+            }
+            html += '<div class="preview-item-meta">';
+            if (badge) html += badge;
+            if (asset.category && asset.category.title) {
+                html += '<span>' + escapeHtml(asset.category.title) + '</span>';
+            }
+            if (duration) html += '<span>' + duration + '</span>';
+            html += '</div>';
+            html += '</div></div>';
+        });
+        
+        return html;
+    }
+    
+    function clearPreview() {
+        previewContent.innerHTML = '<div class="preview-empty"><div class="preview-empty-icon">🔍</div><p>Click "Load Preview" to see what content your query will return</p></div>';
+        previewCount.textContent = '';
+    }
+    
+    // ============================================
+    // RESET FILTERS
+    // ============================================
+    
+    resetFilters.addEventListener('click', function() {
+        filterCategory.value = '';
+        filterLimit.value = 10;
+        filterSort.value = '-published';
+        document.querySelectorAll('.quick-tag').forEach(function(tag) {
+            tag.classList.remove('active');
+        });
+        updateGeneratedCode();
+        showToast('Filters reset');
+    });
+    
+    resetPodcastFilters.addEventListener('click', function() {
+        podcastContentType.value = '';
+        podcastAccess.value = '';
+        podcastLimit.value = 10;
+        podcastSort.value = '-published';
+        podcastDateFilter.value = '';
+        selectedSeries = [];
+        currentMode = 'single';
+        
+        updateModeToggle('single');
+        updateModeUI();
+        
+        var items = seriesList.querySelectorAll('.series-item');
+        items.forEach(function(item) {
+            item.classList.remove('selected');
+            item.querySelector('input').checked = false;
+            if (item.dataset.id === '') {
+                item.classList.add('selected');
+                item.querySelector('input').checked = true;
+            }
+        });
+        
+        updateGeneratedCode();
+        renderTemplateList();
+        showToast('Podcast filters reset');
+    });
+    
+    // ============================================
+    // INPUT CHANGE HANDLERS
+    // ============================================
+    
+    providerSelect.addEventListener('change', function() {
+        selectedSeries = [];
+        seriesData = [];
+        seriesList.innerHTML = '<div class="series-empty"><p>Select a provider and click "Load Series" to discover podcasts</p></div>';
+        seriesSelectedCount.classList.add('hidden');
+        clearPreview();
+        updateGeneratedCode();
+    });
+    
+    variableInput.addEventListener('input', updateGeneratedCode);
+    filterLimit.addEventListener('input', updateGeneratedCode);
+    filterSort.addEventListener('change', updateGeneratedCode);
+    filterCategory.addEventListener('change', updateGeneratedCode);
+    
+    podcastContentType.addEventListener('change', updateGeneratedCode);
+    podcastAccess.addEventListener('change', updateGeneratedCode);
+    podcastLimit.addEventListener('input', updateGeneratedCode);
+    podcastSort.addEventListener('change', updateGeneratedCode);
+    podcastDateFilter.addEventListener('change', updateGeneratedCode);
+    
+    // ============================================
+    // COPY BUTTONS
+    // ============================================
+    
+    var copyButtons = document.querySelectorAll('.copy-btn');
+    copyButtons.forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var targetId = this.dataset.target;
+            var targetElement = document.getElementById(targetId);
+            var text = targetElement.textContent;
+            
+            navigator.clipboard.writeText(text).then(function() {
+                showToast('Copied to clipboard!');
+            }).catch(function(err) {
+                console.error('Copy failed:', err);
+                showToast('Failed to copy');
+            });
+        });
+    });
+    
+    // ============================================
+    // UTILITIES
+    // ============================================
+    
+    function showToast(message) {
+        toast.textContent = message;
+        toast.classList.add('show');
+        setTimeout(function() {
+            toast.classList.remove('show');
+        }, 2500);
+    }
+    
+    function escapeHtml(text) {
+        if (!text) return '';
+        var div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    
+    // ============================================
+    // INITIAL SETUP
+    // ============================================
+    
+    renderPresetCards(contentTypes.live.presets);
+    renderTemplateList();
+    updateGeneratedCode();
+    
+    console.log('SVP Builder v6 initialized - Content-based podcast discovery');
+    
+});
+    </script>
+</body>
+</html>
