@@ -8,7 +8,7 @@
     <array>
         <string>/bin/bash</string>
         <string>-c</string>
-        <string>cd ~/path/to/StreamUI &amp;&amp; ./auto-sync.sh</string>
+        <string>cd "/Users/erik.gundersenschibsted.com/Documents/Documents - Cowork/01 - Projects/StreamUI/StreamUI" &amp;&amp; ./auto-sync.sh</string>
     </array>
     <key>RunAtLoad</key>
     <true/>
