@@ -656,7 +656,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
         seriesList.innerHTML = '<div class="series-loading"><div class="loading-spinner"></div><p>Loading podcasts...</p></div>';
 
-        var url = 'https://svp.vg.no/svp/api/v1/' + provider + '/categories?appName=svpBuilder&limit=500';
+        // Request additional metadata
+        var url = 'https://svp.vg.no/svp/api/v1/' + provider + '/categories?appName=svpBuilder&limit=500&additional=metadata';
 
         fetch(url)
             .then(function (response) {
@@ -666,14 +667,54 @@ document.addEventListener('DOMContentLoaded', function () {
             .then(function (data) {
                 var allCategories = data._embedded ? data._embedded.categories : [];
 
-                // Filter for podcasts using metadata
-                seriesData = allCategories.filter(function (cat) {
+                console.log('Total categories fetched:', allCategories.length);
+
+                // METHOD 1: Filter by podcast metadata (works for most providers)
+                var metadataMatches = allCategories.filter(function (cat) {
                     if (!cat.additional || !cat.additional.metadata) return false;
                     var meta = cat.additional.metadata;
                     return meta.podcast_author || meta.podcast_type || meta.podcast_acast_showId;
                 });
 
-                console.log('Categories fetched:', allCategories.length, '| Podcasts found:', seriesData.length);
+                // METHOD 2: Find podcasts by parent category name (for SVD, etc.)
+                // First, find the "Poddcast" or "Podcast" parent category
+                var podcastParent = allCategories.find(function (cat) {
+                    var title = (cat.title || '').toLowerCase();
+                    return title === 'poddcast' || title === 'podcast' || title === 'podcasts' || title === 'poddar';
+                });
+
+                var parentMatches = [];
+                if (podcastParent) {
+                    console.log('Found podcast parent category:', podcastParent.title, '(ID:', podcastParent.id + ')');
+                    // Get all children of the podcast parent
+                    parentMatches = allCategories.filter(function (cat) {
+                        return cat.parentId === podcastParent.id;
+                    });
+                }
+
+                // Combine both methods and remove duplicates
+                var combinedIds = {};
+                var combined = [];
+
+                metadataMatches.forEach(function (cat) {
+                    if (!combinedIds[cat.id]) {
+                        combinedIds[cat.id] = true;
+                        combined.push(cat);
+                    }
+                });
+
+                parentMatches.forEach(function (cat) {
+                    if (!combinedIds[cat.id]) {
+                        combinedIds[cat.id] = true;
+                        combined.push(cat);
+                    }
+                });
+
+                seriesData = combined;
+
+                console.log('Podcasts found via metadata:', metadataMatches.length);
+                console.log('Podcasts found via parent category:', parentMatches.length);
+                console.log('Total unique podcasts:', seriesData.length);
 
                 renderSeriesList(seriesData);
 
