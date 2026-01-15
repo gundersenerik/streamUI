@@ -966,7 +966,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
             if (podcastDateFilter.value) {
                 var days = parseInt(podcastDateFilter.value);
-                var since = Date.now() - (days * 24 * 60 * 60 * 1000);
+                // SVP API uses Unix timestamps in SECONDS, not milliseconds
+                var since = Math.floor((Date.now() - (days * 24 * 60 * 60 * 1000)) / 1000);
                 filters.push('published>' + since);
             }
 
