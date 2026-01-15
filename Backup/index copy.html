@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SVP Builder</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    
+    <!-- DYNAMIC ISLAND - Status Indicator -->
+    <div class="dynamic-island" id="dynamic-island">
+        <div class="island-content">
+            <span class="island-dot"></span>
+            <span class="island-text" id="island-text">Select a provider to begin</span>
+        </div>
+    </div>
+
+    <div class="app-layout">
+        
+        <!-- LEFT SIDEBAR -->
+        <aside class="sidebar-left">
+            <div class="logo">
+                <div class="logo-icon">SB</div>
+                <div class="logo-text">
+                    <span class="logo-title">SVP Builder</span>
+                    <span class="logo-subtitle">Braze Content Generator</span>
+                </div>
+            </div>
+            
+            <nav class="content-type-nav">
+                <div class="nav-label">CONTENT TYPE</div>
+                
+                <button class="nav-item active" data-type="live">
+                    <span class="nav-icon">📺</span>
+                    <span>Live Content</span>
+                </button>
+                
+                <button class="nav-item" data-type="sports">
+                    <span class="nav-icon">⚽</span>
+                    <span>Sports Events</span>
+                </button>
+                
+                <button class="nav-item" data-type="podcasts">
+                    <span class="nav-icon">🎙️</span>
+                    <span>Podcasts</span>
+                </button>
+                
+                <button class="nav-item" data-type="vod">
+                    <span class="nav-icon">🎬</span>
+                    <span>Video on Demand</span>
+                </button>
+                
+                <button class="nav-item" data-type="all">
+                    <span class="nav-icon">🎯</span>
+                    <span>All Content</span>
+                </button>
+            </nav>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="main-content">
+            
+            <!-- WELCOME STATE (shown when no provider selected) -->
+            <section class="welcome-state" id="welcome-state">
+                <div class="welcome-icon">👋</div>
+                <h1>Welcome to SVP Builder</h1>
+                <p>Generate Braze Connected Content code for Schibsted media brands</p>
+                
+                <div class="welcome-providers">
+                    <div class="welcome-label">Select a provider to get started</div>
+                    <div class="provider-grid">
+                        <button class="provider-btn" data-provider="vgtv">
+                            <span class="provider-btn-icon">📺</span>
+                            <span class="provider-btn-name">VG / VGTV</span>
+                            <span class="provider-btn-region">Norway</span>
+                        </button>
+                        <button class="provider-btn" data-provider="ab">
+                            <span class="provider-btn-icon">📰</span>
+                            <span class="provider-btn-name">Aftonbladet</span>
+                            <span class="provider-btn-region">Sweden</span>
+                        </button>
+                        <button class="provider-btn" data-provider="podme">
+                            <span class="provider-btn-icon">🎧</span>
+                            <span class="provider-btn-name">Podme</span>
+                            <span class="provider-btn-region">Nordic Audio</span>
+                        </button>
+                        <button class="provider-btn" data-provider="ap">
+                            <span class="provider-btn-icon">📰</span>
+                            <span class="provider-btn-name">Aftenposten</span>
+                            <span class="provider-btn-region">Norway</span>
+                        </button>
+                        <button class="provider-btn" data-provider="svd">
+                            <span class="provider-btn-icon">📰</span>
+                            <span class="provider-btn-name">Svenska Dagbladet</span>
+                            <span class="provider-btn-region">Sweden</span>
+                        </button>
+                        <button class="provider-btn provider-btn-more" data-provider="more">
+                            <span class="provider-btn-icon">+</span>
+                            <span class="provider-btn-name">More Providers</span>
+                            <span class="provider-btn-region">See all options</span>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- MAIN BUILDER (hidden until provider selected) -->
+            <section class="builder-content hidden" id="builder-content">
+                
+                <!-- TOP CONFIG BAR -->
+                <div class="config-bar">
+                    <div class="config-item">
+                        <label class="config-label">
+                            Provider
+                            <button class="info-btn" data-tooltip="The Schibsted media brand whose content you want to fetch">ℹ️</button>
+                        </label>
+                        <select id="provider-select" class="config-select">
+                            <option value="">Select Provider</option>
+                            <optgroup label="Norwegian">
+                                <option value="vgtv">VG / VGTV</option>
+                                <option value="ap">Aftenposten</option>
+                                <option value="bt">Bergens Tidende</option>
+                                <option value="aftenbladet">Stavanger Aftenblad</option>
+                                <option value="e24">E24</option>
+                            </optgroup>
+                            <optgroup label="Swedish">
+                                <option value="ab">Aftonbladet</option>
+                                <option value="svd">Svenska Dagbladet</option>
+                            </optgroup>
+                            <optgroup label="Audio">
+                                <option value="podme">Podme</option>
+                            </optgroup>
+                        </select>
+                    </div>
+                    
+                    <div class="config-item">
+                        <label class="config-label">
+                            Variable Name
+                            <button class="info-btn" data-tooltip="The Liquid variable name used in Braze to access the fetched data. Use in templates like {{variable._embedded.assets[0].title}}">ℹ️</button>
+                        </label>
+                        <input type="text" id="variable-name" class="config-input" value="content" placeholder="content">
+                    </div>
+                </div>
+
+                <header class="content-header">
+                    <h1 id="content-title">Live Content</h1>
+                    <p id="content-description">Fetch currently live streams and broadcasts</p>
+                </header>
+
+                <section class="preset-cards" id="preset-cards">
+                    <!-- Dynamically populated -->
+                </section>
+
+                <!-- GENERAL FILTERS (shown for Live, Sports, VOD, All) -->
+                <section class="filters-section" id="general-filters">
+                    <div class="filters-header">
+                        <h3>Filters</h3>
+                        <button class="reset-btn" id="reset-filters">Reset all</button>
+                    </div>
+                    
+                    <div class="filters-grid">
+                        <div class="filter-group">
+                            <label class="filter-label">
+                                CATEGORY
+                                <button class="info-btn" data-tooltip="Filter content by category/topic">ℹ️</button>
+                            </label>
+                            <select class="filter-select" id="filter-category">
+                                <option value="">All Categories</option>
+                            </select>
+                        </div>
+                        
+                        <div class="filter-group">
+                            <label class="filter-label">
+                                RESULTS
+                                <button class="info-btn" data-tooltip="Maximum number of items to fetch (1-100)">ℹ️</button>
+                            </label>
+                            <input type="number" class="filter-input" id="filter-limit" value="10" min="1" max="100">
+                        </div>
+                        
+                        <div class="filter-group">
+                            <label class="filter-label">
+                                SORT
+                                <button class="info-btn" data-tooltip="How results should be ordered">ℹ️</button>
+                            </label>
+                            <select class="filter-select" id="filter-sort">
+                                <option value="-published">Newest First</option>
+                                <option value="published">Oldest First</option>
+                                <option value="-flightTimes.start">Start Time (Latest)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="quick-tags" id="quick-tags">
+                        <button class="quick-tag" data-sport="football">Football</button>
+                        <button class="quick-tag" data-sport="hockey">Hockey</button>
+                        <button class="quick-tag" data-sport="handball">Handball</button>
+                        <button class="quick-tag" data-sport="basketball">Basketball</button>
+                    </div>
+                </section>
+
+                <!-- PODCAST FILTERS (shown only for Podcasts) -->
+                <section class="filters-section podcast-filters hidden" id="podcast-filters">
+                    <div class="filters-header">
+                        <h3>🎙️ Podcast Filters</h3>
+                        <button class="reset-btn" id="reset-podcast-filters">Reset all</button>
+                    </div>
+
+                    <!-- Mode Toggle -->
+                    <div class="mode-toggle">
+                        <button class="mode-btn active" data-mode="single">
+                            <span class="mode-icon">🎧</span>
+                            <span>Single Podcast</span>
+                        </button>
+                        <button class="mode-btn" data-mode="digest">
+                            <span class="mode-icon">📰</span>
+                            <span>Weekly Digest</span>
+                        </button>
+                    </div>
+
+                    <!-- Mode Info -->
+                    <div class="mode-info" id="mode-info">
+                        <div class="mode-info-icon">💡</div>
+                        <div class="mode-info-text">
+                            <strong>Single Podcast Mode:</strong> Fetch episodes from one podcast. Perfect for automated "new episode" emails.
+                        </div>
+                    </div>
+                    
+                    <div class="filters-grid">
+                        <div class="filter-group">
+                            <label class="filter-label">
+                                CONTENT TYPE
+                                <button class="info-btn" data-tooltip="Filter by episode type: full episodes vs shorter clips">ℹ️</button>
+                            </label>
+                            <select class="filter-select" id="podcast-content-type">
+                                <option value="">All Content</option>
+                                <option value="episodes">Full Episodes Only</option>
+                                <option value="clips">Clips & Highlights</option>
+                            </select>
+                        </div>
+                        
+                        <div class="filter-group">
+                            <label class="filter-label">
+                                ACCESS
+                                <button class="info-btn" data-tooltip="Filter by subscription requirement: free content or premium/paid only">ℹ️</button>
+                            </label>
+                            <select class="filter-select" id="podcast-access">
+                                <option value="">All (Free & Paid)</option>
+                                <option value="free">Free Only</option>
+                                <option value="paid">Premium/Paid Only</option>
+                            </select>
+                        </div>
+                        
+                        <div class="filter-group" id="limit-group">
+                            <label class="filter-label">
+                                RESULTS
+                                <button class="info-btn" data-tooltip="Number of episodes to fetch per podcast">ℹ️</button>
+                            </label>
+                            <input type="number" class="filter-input" id="podcast-limit" value="10" min="1" max="100">
+                        </div>
+                        
+                        <div class="filter-group">
+                            <label class="filter-label">
+                                SORT BY
+                                <button class="info-btn" data-tooltip="Order of results">ℹ️</button>
+                            </label>
+                            <select class="filter-select" id="podcast-sort">
+                                <option value="-published">Newest First</option>
+                                <option value="published">Oldest First</option>
+                                <option value="-duration">Longest First</option>
+                                <option value="duration">Shortest First</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-group" id="date-filter-group">
+                            <label class="filter-label">
+                                RELEASED WITHIN
+                                <button class="info-btn" data-tooltip="Only show episodes published within this time period">ℹ️</button>
+                            </label>
+                            <select class="filter-select" id="podcast-date-filter">
+                                <option value="">Any Time</option>
+                                <option value="1">Last 24 Hours</option>
+                                <option value="7">Last 7 Days</option>
+                                <option value="14">Last 14 Days</option>
+                                <option value="30">Last 30 Days</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Podcast Series Selection -->
+                    <div class="series-section">
+                        <div class="series-header">
+                            <label class="filter-label" id="series-label">SELECT PODCAST SERIES</label>
+                            <div class="series-search">
+                                <input type="text" class="series-search-input" id="series-search" placeholder="Search podcasts...">
+                            </div>
+                        </div>
+                        <div class="series-list" id="series-list">
+                            <div class="series-loading">
+                                <div class="loading-spinner"></div>
+                                <p>Loading podcasts...</p>
+                            </div>
+                        </div>
+                        <div class="series-selected-count hidden" id="series-selected-count">
+                            <span id="selected-count-text">0 podcasts selected</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- PREVIEW SECTION -->
+                <section class="preview-section">
+                    <div class="preview-header">
+                        <span class="preview-icon">📋</span>
+                        <span class="preview-title">Live Preview</span>
+                        <span class="preview-count" id="preview-count"></span>
+                        <div class="preview-status" id="preview-status">
+                            <span class="preview-status-dot"></span>
+                            <span class="preview-status-text">Auto-updates</span>
+                        </div>
+                    </div>
+                    <div class="preview-content" id="preview-content">
+                        <div class="preview-empty">
+                            <div class="preview-empty-icon">🔍</div>
+                            <p>Configure your filters above to see a live preview</p>
+                        </div>
+                    </div>
+                </section>
+            </section>
+        </main>
+
+        <!-- RIGHT SIDEBAR - Output Only -->
+        <aside class="sidebar-right" id="sidebar-right">
+            <div class="output-header">
+                <h2>Generated Code</h2>
+                <p>Ready to copy into Braze</p>
+            </div>
+
+            <!-- Output Summary Cards -->
+            <div class="output-cards">
+                <div class="output-card" id="output-connected">
+                    <div class="output-card-header">
+                        <div class="output-card-icon">⚡</div>
+                        <div class="output-card-info">
+                            <div class="output-card-title">Connected Content</div>
+                            <div class="output-card-subtitle" id="connected-subtitle">API call code for Braze</div>
+                        </div>
+                    </div>
+                    <div class="output-card-actions">
+                        <button class="btn-copy" id="copy-connected">
+                            <span class="btn-icon">📋</span>
+                            Copy
+                        </button>
+                        <button class="btn-view" id="view-connected">
+                            <span class="btn-icon">👁</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="output-card" id="output-liquid">
+                    <div class="output-card-header">
+                        <div class="output-card-icon">🧪</div>
+                        <div class="output-card-info">
+                            <div class="output-card-title">Liquid Template</div>
+                            <div class="output-card-subtitle" id="liquid-subtitle">HTML rendering code</div>
+                        </div>
+                    </div>
+                    <div class="output-card-actions">
+                        <button class="btn-copy" id="copy-liquid">
+                            <span class="btn-icon">📋</span>
+                            Copy
+                        </button>
+                        <button class="btn-view" id="view-liquid">
+                            <span class="btn-icon">👁</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Template Selection -->
+            <div class="template-section">
+                <div class="template-header">
+                    <h3>Template Style</h3>
+                    <button class="info-btn" data-tooltip="Choose how the content will be displayed in your email/message">ℹ️</button>
+                </div>
+                <div class="template-list" id="template-list">
+                    <!-- Templates dynamically populated -->
+                </div>
+            </div>
+
+            <!-- Quick Copy All -->
+            <div class="output-footer">
+                <button class="btn-copy-all" id="copy-all">
+                    <span class="btn-icon">📦</span>
+                    Copy Complete Code
+                </button>
+                <button class="btn-view-all" id="view-all">
+                    <span class="btn-icon">👁</span>
+                    View Full Code
+                </button>
+            </div>
+        </aside>
+    </div>
+
+    <!-- CODE MODAL -->
+    <div class="modal-overlay hidden" id="code-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 id="modal-title">Generated Code</h2>
+                <button class="modal-close" id="modal-close">✕</button>
+            </div>
+            <div class="modal-tabs">
+                <button class="modal-tab active" data-tab="connected">Connected Content</button>
+                <button class="modal-tab" data-tab="liquid">Liquid Template</button>
+                <button class="modal-tab" data-tab="complete">Complete Code</button>
+            </div>
+            <div class="modal-content">
+                <div class="modal-code-header">
+                    <span id="modal-code-label">CONNECTED CONTENT</span>
+                    <button class="btn-copy-modal" id="modal-copy">
+                        <span class="btn-icon">📋</span>
+                        Copy
+                    </button>
+                </div>
+                <pre class="modal-code" id="modal-code"></pre>
+            </div>
+            <div class="modal-footer">
+                <p class="modal-hint">💡 Tip: Connected Content goes at the top of your Braze message, Liquid Template goes where you want the content to appear.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOOLTIP (reusable) -->
+    <div class="tooltip" id="tooltip"></div>
+
+    <!-- TOAST -->
+    <div class="toast" id="toast"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>
