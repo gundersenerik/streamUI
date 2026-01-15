@@ -912,11 +912,13 @@ document.addEventListener('DOMContentLoaded', function () {
             params.push('additional=settings,metadata,tags');
 
         } else if (currentContentType === 'podcasts') {
+            // Always use search endpoint - /categories/{id}/assets returns 404 for some categories
+            baseUrl += '/search';
+            filters.push('assetType::audio');
+            
             if (seriesId) {
-                baseUrl += '/categories/' + seriesId + '/assets';
-            } else {
-                baseUrl += '/search';
-                filters.push('assetType::audio');
+                // Filter by category ID instead of using the direct endpoint
+                filters.push('categoryId::' + seriesId);
             }
 
             if (podcastContentType.value === 'episodes') {
