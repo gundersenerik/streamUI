@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SVP Builder</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-layout">
+        
+        <!-- LEFT SIDEBAR -->
+        <aside class="sidebar-left">
+            <div class="logo">
+                <div class="logo-icon">SB</div>
+                <div class="logo-text">
+                    <span class="logo-title">SVP Builder</span>
+                    <span class="logo-subtitle">Braze Content Generator</span>
+                </div>
+            </div>
+            
+            <nav class="content-type-nav">
+                <div class="nav-label">CONTENT TYPE</div>
+                
+                <button class="nav-item active" data-type="live">
+                    <span class="nav-icon">📺</span>
+                    <span>Live Content</span>
+                </button>
+                
+                <button class="nav-item" data-type="sports">
+                    <span class="nav-icon">⚽</span>
+                    <span>Sports Events</span>
+                </button>
+                
+                <button class="nav-item" data-type="podcasts">
+                    <span class="nav-icon">🎙️</span>
+                    <span>Podcasts</span>
+                </button>
+                
+                <button class="nav-item" data-type="vod">
+                    <span class="nav-icon">🎬</span>
+                    <span>Video on Demand</span>
+                </button>
+                
+                <button class="nav-item" data-type="all">
+                    <span class="nav-icon">🎯</span>
+                    <span>All Content</span>
+                </button>
+            </nav>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="main-content">
+            
+            <header class="content-header">
+                <h1 id="content-title">Live Content</h1>
+                <p id="content-description">Fetch currently live streams and broadcasts</p>
+            </header>
+
+            <section class="preset-cards" id="preset-cards">
+                <!-- Dynamically populated -->
+            </section>
+
+            <!-- GENERAL FILTERS (shown for Live, Sports, VOD, All) -->
+            <section class="filters-section" id="general-filters">
+                <div class="filters-header">
+                    <h3>Filters</h3>
+                    <button class="reset-btn" id="reset-filters">Reset all</button>
+                </div>
+                
+                <div class="filters-grid">
+                    <div class="filter-group">
+                        <label class="filter-label">CATEGORY</label>
+                        <select class="filter-select" id="filter-category">
+                            <option value="">All Categories</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label class="filter-label">RESULTS</label>
+                        <input type="number" class="filter-input" id="filter-limit" value="10" min="1" max="100">
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label class="filter-label">SORT</label>
+                        <select class="filter-select" id="filter-sort">
+                            <option value="-published">Newest First</option>
+                            <option value="published">Oldest First</option>
+                            <option value="-flightTimes.start">Start Time (Latest)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="quick-tags" id="quick-tags">
+                    <button class="quick-tag" data-sport="football">Football</button>
+                    <button class="quick-tag" data-sport="hockey">Hockey</button>
+                    <button class="quick-tag" data-sport="handball">Handball</button>
+                    <button class="quick-tag" data-sport="basketball">Basketball</button>
+                </div>
+            </section>
+
+            <!-- PODCAST FILTERS (shown only for Podcasts) -->
+            <section class="filters-section podcast-filters hidden" id="podcast-filters">
+                <div class="filters-header">
+                    <h3>🎙️ Podcast Filters</h3>
+                    <button class="reset-btn" id="reset-podcast-filters">Reset all</button>
+                </div>
+
+                <!-- Mode Toggle -->
+                <div class="mode-toggle">
+                    <button class="mode-btn active" data-mode="single">
+                        <span class="mode-icon">🎧</span>
+                        <span>Single Podcast</span>
+                    </button>
+                    <button class="mode-btn" data-mode="digest">
+                        <span class="mode-icon">📰</span>
+                        <span>Weekly Digest</span>
+                    </button>
+                </div>
+
+                <!-- Mode Info -->
+                <div class="mode-info" id="mode-info">
+                    <div class="mode-info-icon">💡</div>
+                    <div class="mode-info-text">
+                        <strong>Single Podcast Mode:</strong> Fetch episodes from one podcast. Perfect for automated "new episode" emails.
+                    </div>
+                </div>
+                
+                <div class="filters-grid">
+                    <div class="filter-group">
+                        <label class="filter-label">CONTENT TYPE</label>
+                        <select class="filter-select" id="podcast-content-type">
+                            <option value="">All Content</option>
+                            <option value="episodes">Full Episodes Only</option>
+                            <option value="clips">Clips & Highlights</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label class="filter-label">ACCESS</label>
+                        <select class="filter-select" id="podcast-access">
+                            <option value="">All (Free & Paid)</option>
+                            <option value="free">Free Only</option>
+                            <option value="paid">Premium/Paid Only</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group" id="limit-group">
+                        <label class="filter-label">RESULTS</label>
+                        <input type="number" class="filter-input" id="podcast-limit" value="10" min="1" max="100">
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label class="filter-label">SORT BY</label>
+                        <select class="filter-select" id="podcast-sort">
+                            <option value="-published">Newest First</option>
+                            <option value="published">Oldest First</option>
+                            <option value="-duration">Longest First</option>
+                            <option value="duration">Shortest First</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group" id="date-filter-group">
+                        <label class="filter-label">RELEASED WITHIN</label>
+                        <select class="filter-select" id="podcast-date-filter">
+                            <option value="">Any Time</option>
+                            <option value="1">Last 24 Hours</option>
+                            <option value="7">Last 7 Days</option>
+                            <option value="14">Last 14 Days</option>
+                            <option value="30">Last 30 Days</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Podcast Series Selection -->
+                <div class="series-section">
+                    <div class="series-header">
+                        <label class="filter-label" id="series-label">SELECT PODCAST SERIES</label>
+                        <button class="fetch-series-btn" id="fetch-series">
+                            <span class="fetch-icon">🔄</span>
+                            Load Series
+                        </button>
+                    </div>
+                    <div class="series-list" id="series-list">
+                        <div class="series-empty">
+                            <p>Select a provider and click "Load Series" to see available podcasts</p>
+                        </div>
+                    </div>
+                    <div class="series-selected-count hidden" id="series-selected-count">
+                        <span id="selected-count-text">0 podcasts selected</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- PREVIEW SECTION -->
+            <section class="preview-section">
+                <div class="preview-header">
+                    <span class="preview-icon">📋</span>
+                    <span class="preview-title">Content Preview</span>
+                    <span class="preview-count" id="preview-count"></span>
+                    <button class="preview-btn" id="load-preview">Load Preview</button>
+                </div>
+                <div class="preview-content" id="preview-content">
+                    <div class="preview-empty">
+                        <div class="preview-empty-icon">🔍</div>
+                        <p>Click "Load Preview" to see what content your query will return</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- RIGHT SIDEBAR -->
+        <aside class="sidebar-right">
+            
+            <div class="provider-section">
+                <div class="provider-header">
+                    <span class="provider-icon">📡</span>
+                    <span class="provider-label">PROVIDER</span>
+                </div>
+                <select id="provider-select" class="provider-select">
+                    <option value="">Select Provider</option>
+                    <optgroup label="Norwegian">
+                        <option value="vgtv">VG / VGTV</option>
+                        <option value="ap">Aftenposten</option>
+                        <option value="bt">Bergens Tidende</option>
+                        <option value="aftenbladet">Stavanger Aftenblad</option>
+                        <option value="e24">E24</option>
+                    </optgroup>
+                    <optgroup label="Swedish">
+                        <option value="ab">Aftonbladet</option>
+                        <option value="svd">Svenska Dagbladet</option>
+                    </optgroup>
+                    <optgroup label="Audio">
+                        <option value="podme">Podme</option>
+                    </optgroup>
+                </select>
+            </div>
+
+            <div class="variable-section">
+                <label class="field-label">VARIABLE NAME</label>
+                <input type="text" id="variable-name" class="variable-input" value="content">
+                <small class="variable-hint" id="variable-hint"></small>
+            </div>
+
+            <div class="output-tabs">
+                <button class="output-tab active" data-tab="connected">Connected Content</button>
+                <button class="output-tab" data-tab="liquid">Liquid Templates</button>
+            </div>
+
+            <div class="output-panel" id="panel-connected">
+                <div class="code-section">
+                    <div class="code-header">
+                        <span>BRAZE CODE</span>
+                        <button class="copy-btn" data-target="braze-code">Copy</button>
+                    </div>
+                    <pre class="code-block" id="braze-code">Select a provider to begin...</pre>
+                </div>
+
+                <div class="code-section">
+                    <div class="code-header">
+                        <span>API URL</span>
+                        <button class="copy-btn" data-target="readable-url">Copy</button>
+                    </div>
+                    <pre class="code-block code-block-small" id="readable-url">https://svp.vg.no/...</pre>
+                </div>
+            </div>
+
+            <div class="output-panel hidden" id="panel-liquid">
+                <div class="template-list" id="template-list">
+                    <!-- Templates will be dynamically populated based on mode -->
+                </div>
+
+                <div class="code-section">
+                    <div class="code-header">
+                        <span>LIQUID CODE</span>
+                        <button class="copy-btn" data-target="liquid-code">Copy</button>
+                    </div>
+                    <pre class="code-block" id="liquid-code">Select a template above...</pre>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>
