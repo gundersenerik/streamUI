@@ -668,23 +668,34 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 console.log('Total categories fetched:', allCategories.length);
 
-                // Step 1: Find the podcast parent category (top-level category with podcast-related name)
+                // Helper function to check if title matches podcast-related names
+                function isPodcastTitle(title) {
+                    var t = (title || '').toLowerCase();
+                    return t === 'podkast' ||
+                           t === 'poddcast' ||
+                           t === 'podcast' ||
+                           t === 'podcasts' ||
+                           t === 'poddar' ||
+                           t === 'lyd' ||
+                           t === 'audio';
+                }
+
+                // Step 1: Try to find a top-level podcast parent category (parentId === 0)
                 var podcastParent = allCategories.find(function (cat) {
-                    if (cat.parentId !== 0) return false; // Must be top-level
-                    var title = (cat.title || '').toLowerCase();
-                    return title === 'podkast' ||
-                           title === 'poddcast' ||
-                           title === 'podcast' ||
-                           title === 'podcasts' ||
-                           title === 'poddar' ||
-                           title === 'lyd' ||
-                           title === 'audio';
+                    return cat.parentId === 0 && isPodcastTitle(cat.title);
                 });
 
-                if (podcastParent) {
-                    console.log('Found podcast parent:', podcastParent.title, '(ID:', podcastParent.id + ')');
+                // Step 2: If not found at top level, look for podcast category anywhere in hierarchy
+                if (!podcastParent) {
+                    podcastParent = allCategories.find(function (cat) {
+                        return isPodcastTitle(cat.title);
+                    });
+                }
 
-                    // Step 2: Get all children of the podcast parent
+                if (podcastParent) {
+                    console.log('Found podcast parent:', podcastParent.title, '(ID:', podcastParent.id + ', parentId:', podcastParent.parentId + ')');
+
+                    // Step 3: Get all children of the podcast parent
                     seriesData = allCategories.filter(function (cat) {
                         return cat.parentId === podcastParent.id;
                     });
