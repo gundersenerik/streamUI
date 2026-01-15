@@ -1,14 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SVP Builder</title>
     <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
     <div class="app-layout">
-        
+
         <!-- LEFT SIDEBAR -->
         <aside class="sidebar-left">
             <div class="logo">
@@ -18,40 +20,44 @@
                     <span class="logo-subtitle">Braze Content Generator</span>
                 </div>
             </div>
-            
+
             <nav class="content-type-nav">
                 <div class="nav-label">CONTENT TYPE</div>
-                
+
                 <button class="nav-item active" data-type="live">
                     <span class="nav-icon">📺</span>
                     <span>Live Content</span>
                 </button>
-                
+
                 <button class="nav-item" data-type="sports">
                     <span class="nav-icon">⚽</span>
                     <span>Sports Events</span>
                 </button>
-                
+
                 <button class="nav-item" data-type="podcasts">
                     <span class="nav-icon">🎙️</span>
                     <span>Podcasts</span>
                 </button>
-                
+
                 <button class="nav-item" data-type="vod">
                     <span class="nav-icon">🎬</span>
                     <span>Video on Demand</span>
                 </button>
-                
+
                 <button class="nav-item" data-type="all">
                     <span class="nav-icon">🎯</span>
                     <span>All Content</span>
                 </button>
             </nav>
+
+            <div class="sidebar-footer">
+                <div class="version-info">v7.0 - Sports Update</div>
+            </div>
         </aside>
 
         <!-- MAIN CONTENT -->
         <main class="main-content">
-            
+
             <header class="content-header">
                 <h1 id="content-title">Live Content</h1>
                 <p id="content-description">Fetch currently live streams and broadcasts</p>
@@ -61,13 +67,13 @@
                 <!-- Dynamically populated -->
             </section>
 
-            <!-- GENERAL FILTERS (shown for Live, Sports, VOD, All) -->
+            <!-- GENERAL FILTERS (shown for Live, VOD, All) -->
             <section class="filters-section" id="general-filters">
                 <div class="filters-header">
                     <h3>Filters</h3>
                     <button class="reset-btn" id="reset-filters">Reset all</button>
                 </div>
-                
+
                 <div class="filters-grid">
                     <div class="filter-group">
                         <label class="filter-label">CATEGORY</label>
@@ -75,12 +81,12 @@
                             <option value="">All Categories</option>
                         </select>
                     </div>
-                    
+
                     <div class="filter-group">
                         <label class="filter-label">RESULTS</label>
                         <input type="number" class="filter-input" id="filter-limit" value="10" min="1" max="100">
                     </div>
-                    
+
                     <div class="filter-group">
                         <label class="filter-label">SORT</label>
                         <select class="filter-select" id="filter-sort">
@@ -90,12 +96,83 @@
                         </select>
                     </div>
                 </div>
+            </section>
 
-                <div class="quick-tags" id="quick-tags">
-                    <button class="quick-tag" data-sport="football">Football</button>
-                    <button class="quick-tag" data-sport="hockey">Hockey</button>
-                    <button class="quick-tag" data-sport="handball">Handball</button>
-                    <button class="quick-tag" data-sport="basketball">Basketball</button>
+            <!-- SPORTS FILTERS (shown only for Sports Events) -->
+            <section class="filters-section sports-filters hidden" id="sports-filters">
+                <div class="filters-header">
+                    <h3>⚽ Sports Filters</h3>
+                    <button class="reset-btn" id="reset-sports-filters">Reset all</button>
+                </div>
+
+                <!-- Sports Info Banner -->
+                <div class="sports-info" id="sports-info">
+                    <div class="sports-info-icon">📡</div>
+                    <div class="sports-info-text">
+                        <strong>Live Sports:</strong> Available on <span class="provider-highlight">VGTV</span> and
+                        <span class="provider-highlight">Aftonbladet</span>. Select one of these providers to fetch
+                        sports content.
+                    </div>
+                </div>
+
+                <!-- Time Filter Toggle -->
+                <div class="time-filter-toggle">
+                    <button class="time-btn active" data-time="live">
+                        <span class="time-icon">🔴</span>
+                        <span>Live Now</span>
+                    </button>
+                    <button class="time-btn" data-time="today">
+                        <span class="time-icon">📅</span>
+                        <span>Today</span>
+                    </button>
+                    <button class="time-btn" data-time="week">
+                        <span class="time-icon">📆</span>
+                        <span>This Week</span>
+                    </button>
+                    <button class="time-btn" data-time="upcoming">
+                        <span class="time-icon">⏰</span>
+                        <span>Upcoming</span>
+                    </button>
+                    <button class="time-btn" data-time="all">
+                        <span class="time-icon">🎯</span>
+                        <span>All</span>
+                    </button>
+                </div>
+
+                <div class="filters-grid">
+                    <div class="filter-group">
+                        <label class="filter-label">RESULTS</label>
+                        <input type="number" class="filter-input" id="sports-limit" value="10" min="1" max="100">
+                    </div>
+
+                    <div class="filter-group">
+                        <label class="filter-label">SORT BY</label>
+                        <select class="filter-select" id="sports-sort">
+                            <option value="flightTimes.start">Start Time (Soonest)</option>
+                            <option value="-flightTimes.start">Start Time (Latest)</option>
+                            <option value="-published">Recently Added</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Sport Type Tags -->
+                <div class="sport-tags-section">
+                    <div class="sport-tags-header">
+                        <label class="filter-label">FILTER BY SPORT</label>
+                        <button class="load-tags-btn" id="load-sport-tags">
+                            <span class="load-icon">🔄</span>
+                            Load Tags
+                        </button>
+                    </div>
+                    <div class="sport-tags-list" id="sport-tags-list">
+                        <div class="sport-tags-empty">
+                            <p>Select a provider and click "Load Tags" to see available sports</p>
+                        </div>
+                    </div>
+                    <div class="selected-tags-count hidden" id="selected-tags-count">
+                        <span id="tags-count-text">0 sports selected</span>
+                        <button class="clear-tags-btn" id="clear-tags">Clear all</button>
+                    </div>
                 </div>
             </section>
 
@@ -122,10 +199,11 @@
                 <div class="mode-info" id="mode-info">
                     <div class="mode-info-icon">💡</div>
                     <div class="mode-info-text">
-                        <strong>Single Podcast Mode:</strong> Fetch episodes from one podcast. Perfect for automated "new episode" emails.
+                        <strong>Single Podcast Mode:</strong> Fetch episodes from one podcast. Perfect for automated
+                        "new episode" emails.
                     </div>
                 </div>
-                
+
                 <div class="filters-grid">
                     <div class="filter-group">
                         <label class="filter-label">CONTENT TYPE</label>
@@ -135,7 +213,7 @@
                             <option value="clips">Clips & Highlights</option>
                         </select>
                     </div>
-                    
+
                     <div class="filter-group">
                         <label class="filter-label">ACCESS</label>
                         <select class="filter-select" id="podcast-access">
@@ -144,12 +222,12 @@
                             <option value="paid">Premium/Paid Only</option>
                         </select>
                     </div>
-                    
+
                     <div class="filter-group" id="limit-group">
                         <label class="filter-label">RESULTS</label>
                         <input type="number" class="filter-input" id="podcast-limit" value="10" min="1" max="100">
                     </div>
-                    
+
                     <div class="filter-group">
                         <label class="filter-label">SORT BY</label>
                         <select class="filter-select" id="podcast-sort">
@@ -181,6 +259,7 @@
                             Load Series
                         </button>
                     </div>
+                    <input type="text" class="series-search" id="series-search" placeholder="Search podcasts...">
                     <div class="series-list" id="series-list">
                         <div class="series-empty">
                             <p>Select a provider and click "Load Series" to see available podcasts</p>
@@ -211,7 +290,7 @@
 
         <!-- RIGHT SIDEBAR -->
         <aside class="sidebar-right">
-            
+
             <div class="provider-section">
                 <div class="provider-header">
                     <span class="provider-icon">📡</span>
@@ -220,20 +299,21 @@
                 <select id="provider-select" class="provider-select">
                     <option value="">Select Provider</option>
                     <optgroup label="Norwegian">
-                        <option value="vgtv">VG / VGTV</option>
+                        <option value="vgtv">VG / VGTV ⚽</option>
                         <option value="ap">Aftenposten</option>
                         <option value="bt">Bergens Tidende</option>
                         <option value="aftenbladet">Stavanger Aftenblad</option>
                         <option value="e24">E24</option>
                     </optgroup>
                     <optgroup label="Swedish">
-                        <option value="ab">Aftonbladet</option>
+                        <option value="ab">Aftonbladet ⚽</option>
                         <option value="svd">Svenska Dagbladet</option>
                     </optgroup>
                     <optgroup label="Audio">
                         <option value="podme">Podme</option>
                     </optgroup>
                 </select>
+                <small class="provider-hint" id="provider-hint"></small>
             </div>
 
             <div class="variable-section">
@@ -285,4 +365,5 @@
 
     <script src="app.js"></script>
 </body>
+
 </html>

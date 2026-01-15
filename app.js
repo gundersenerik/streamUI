@@ -1,35 +1,24 @@
-// SVP Builder v6 - Complete UX Overhaul
-// Features: Auto-preview, Auto-load series, Dynamic Island, Tooltips, Modal
-// v6.1 - Fixed podcast detection (use metadata instead of isSeries flag)
-// v6.4 - Added episode URL generation for clickable links in emails
+// SVP Builder v7.0 - Sports Events Update
+// Features: Live sports filtering, tag-based sport filtering, time-based queries
+// Supports: VGTV (Norway) and AB/Aftonbladet (Sweden) for sports content
 
 document.addEventListener('DOMContentLoaded', function () {
 
-    console.log('SVP Builder v6.1 loading...');
+    console.log('SVP Builder v7.0 loading...');
 
     // ============================================
     // ELEMENT REFERENCES
     // ============================================
-
-    // Dynamic Island
-    var dynamicIsland = document.getElementById('dynamic-island');
-    var islandText = document.getElementById('island-text');
-    var islandDot = dynamicIsland.querySelector('.island-dot');
-
-    // Welcome & Builder
-    var welcomeState = document.getElementById('welcome-state');
-    var builderContent = document.getElementById('builder-content');
-    var providerBtns = document.querySelectorAll('.provider-btn');
 
     // Navigation
     var navItems = document.querySelectorAll('.nav-item');
     var contentTitle = document.getElementById('content-title');
     var contentDescription = document.getElementById('content-description');
     var presetCardsContainer = document.getElementById('preset-cards');
-    var quickTags = document.getElementById('quick-tags');
 
     // Config
     var providerSelect = document.getElementById('provider-select');
+    var providerHint = document.getElementById('provider-hint');
     var variableInput = document.getElementById('variable-name');
 
     // Filters - General
@@ -38,6 +27,19 @@ document.addEventListener('DOMContentLoaded', function () {
     var filterLimit = document.getElementById('filter-limit');
     var filterSort = document.getElementById('filter-sort');
     var resetFilters = document.getElementById('reset-filters');
+
+    // Filters - Sports
+    var sportsFilters = document.getElementById('sports-filters');
+    var sportsInfo = document.getElementById('sports-info');
+    var timeBtns = document.querySelectorAll('.time-btn');
+    var sportsLimit = document.getElementById('sports-limit');
+    var sportsSort = document.getElementById('sports-sort');
+    var loadSportTagsBtn = document.getElementById('load-sport-tags');
+    var sportTagsList = document.getElementById('sport-tags-list');
+    var selectedTagsCount = document.getElementById('selected-tags-count');
+    var tagsCountText = document.getElementById('tags-count-text');
+    var clearTagsBtn = document.getElementById('clear-tags');
+    var resetSportsFilters = document.getElementById('reset-sports-filters');
 
     // Filters - Podcast
     var podcastFilters = document.getElementById('podcast-filters');
@@ -54,36 +56,23 @@ document.addEventListener('DOMContentLoaded', function () {
     var selectedCountText = document.getElementById('selected-count-text');
     var modeInfo = document.getElementById('mode-info');
     var modeBtns = document.querySelectorAll('.mode-btn');
+    var fetchSeriesBtn = document.getElementById('fetch-series');
 
     // Preview
     var previewContent = document.getElementById('preview-content');
     var previewCount = document.getElementById('preview-count');
-    var previewStatus = document.getElementById('preview-status');
+    var previewBtn = document.getElementById('load-preview');
 
     // Output
+    var outputTabs = document.querySelectorAll('.output-tab');
+    var panelConnected = document.getElementById('panel-connected');
+    var panelLiquid = document.getElementById('panel-liquid');
     var templateList = document.getElementById('template-list');
-    var connectedSubtitle = document.getElementById('connected-subtitle');
-    var liquidSubtitle = document.getElementById('liquid-subtitle');
+    var brazeCode = document.getElementById('braze-code');
+    var readableUrl = document.getElementById('readable-url');
+    var liquidCode = document.getElementById('liquid-code');
 
-    // Buttons
-    var copyConnectedBtn = document.getElementById('copy-connected');
-    var viewConnectedBtn = document.getElementById('view-connected');
-    var copyLiquidBtn = document.getElementById('copy-liquid');
-    var viewLiquidBtn = document.getElementById('view-liquid');
-    var copyAllBtn = document.getElementById('copy-all');
-    var viewAllBtn = document.getElementById('view-all');
-
-    // Modal
-    var modalOverlay = document.getElementById('code-modal');
-    var modalTitle = document.getElementById('modal-title');
-    var modalCode = document.getElementById('modal-code');
-    var modalCodeLabel = document.getElementById('modal-code-label');
-    var modalCopyBtn = document.getElementById('modal-copy');
-    var modalCloseBtn = document.getElementById('modal-close');
-    var modalTabs = document.querySelectorAll('.modal-tab');
-
-    // Tooltip
-    var tooltip = document.getElementById('tooltip');
+    // Toast
     var toast = document.getElementById('toast');
 
     // ============================================
@@ -95,7 +84,7 @@ document.addEventListener('DOMContentLoaded', function () {
             title: 'Live Content',
             description: 'Fetch currently live streams and broadcasts',
             filter: 'streamType::live',
-            showTags: false,
+            showSportsFilters: false,
             presets: [
                 { icon: '🔴', title: 'All Live Now', desc: 'Everything currently streaming', preset: 'all' },
                 { icon: '🔄', title: 'Recently Ended', desc: 'Last 24 hours', preset: 'recent' },
@@ -104,21 +93,21 @@ document.addEventListener('DOMContentLoaded', function () {
         },
         sports: {
             title: 'Sports Events',
-            description: 'Live and upcoming sports matches',
-            filter: 'streamType::live',
-            showTags: true,
+            description: 'Live and upcoming sports matches from VGTV & Aftonbladet',
+            filter: 'streamType::live|additional.metadata.contentType::liveSports',
+            showSportsFilters: true,
             presets: [
-                { icon: '⚽', title: 'All Sports', desc: 'Every sport type', preset: 'all' },
-                { icon: '🔴', title: 'Live Now', desc: 'Currently playing', preset: 'live' },
+                { icon: '🔴', title: 'Live Now', desc: 'Currently playing', preset: 'live', featured: true },
                 { icon: '📅', title: 'Today\'s Matches', desc: 'All matches today', preset: 'today' },
-                { icon: '📆', title: 'This Week', desc: 'Next 7 days', preset: 'week' }
+                { icon: '📆', title: 'This Week', desc: 'Next 7 days', preset: 'week' },
+                { icon: '⏰', title: 'Upcoming', desc: 'All scheduled', preset: 'upcoming' }
             ]
         },
         podcasts: {
             title: 'Podcasts',
             description: 'Audio podcasts and episodes',
             filter: 'assetType::audio',
-            showTags: false,
+            showSportsFilters: false,
             presets: [
                 { icon: '📬', title: 'Latest Episode', desc: 'For scheduled sends', preset: 'latest-single', featured: true, badge: 'AUTOMATED' },
                 { icon: '📰', title: 'Weekly Digest', desc: 'Multiple podcasts', preset: 'weekly-digest', featured: true, badge: 'AUTOMATED' },
@@ -130,7 +119,7 @@ document.addEventListener('DOMContentLoaded', function () {
             title: 'Video on Demand',
             description: 'Recorded video content and replays',
             filter: 'streamType::vod',
-            showTags: false,
+            showSportsFilters: false,
             presets: [
                 { icon: '🎬', title: 'Latest Videos', desc: 'Most recent uploads', preset: 'latest' },
                 { icon: '🔥', title: 'Trending', desc: 'Most viewed', preset: 'trending' },
@@ -141,7 +130,7 @@ document.addEventListener('DOMContentLoaded', function () {
             title: 'All Content',
             description: 'Search across all content types',
             filter: '',
-            showTags: false,
+            showSportsFilters: false,
             presets: [
                 { icon: '🎯', title: 'Everything', desc: 'No filters applied', preset: 'all' },
                 { icon: '📅', title: 'Recent', desc: 'Last 7 days', preset: 'recent' },
@@ -161,19 +150,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 title: 'Single Episode Card',
                 desc: 'Perfect for "new episode" emails',
                 recommended: true,
-                code: '{% if VAR._embedded.assets.size > 0 %}\n{% assign episode = VAR._embedded.assets[0] %}\n<div style="border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden; max-width: 500px;">\n  <a href="EPISODE_URL{{episode.id}}" style="display: block;">\n    <img src="{{episode.images.main}}?t[]=500x280q80" style="width: 100%; display: block;">\n  </a>\n  <div style="padding: 20px;">\n    <p style="margin: 0 0 8px 0; color: #6b7280; font-size: 14px;">🎙️ New Episode</p>\n    <h2 style="margin: 0 0 12px 0; font-size: 20px; color: #111827;">{{episode.title}}</h2>\n    <p style="margin: 0 0 16px 0; color: #4b5563; font-size: 15px; line-height: 1.5;">{{episode.description | truncate: 150}}</p>\n    <p style="margin: 0 0 16px 0; color: #9ca3af; font-size: 13px;">⏱️ {{episode.duration | divided_by: 60000}} min</p>\n    <a href="EPISODE_URL{{episode.id}}" style="display: inline-block; padding: 12px 24px; background: #7c3aed; color: white; text-decoration: none; border-radius: 8px; font-weight: 600;">Listen Now →</a>\n  </div>\n</div>\n{% else %}\n<p>No new episodes available.</p>\n{% endif %}'
+                code: '{% if VAR._embedded.assets.size > 0 %}\n{% assign episode = VAR._embedded.assets[0] %}\n<div style="border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden; max-width: 500px;">\n  <img src="{{episode.images.main}}?t[]=500x280q80" style="width: 100%; display: block;">\n  <div style="padding: 20px;">\n    <p style="margin: 0 0 8px 0; color: #6b7280; font-size: 14px;">🎙️ New Episode</p>\n    <h2 style="margin: 0 0 12px 0; font-size: 20px; color: #111827;">{{episode.title}}</h2>\n    <p style="margin: 0 0 16px 0; color: #4b5563; font-size: 15px; line-height: 1.5;">{{episode.description | truncate: 150}}</p>\n    <p style="margin: 0 0 16px 0; color: #9ca3af; font-size: 13px;">⏱️ {{episode.duration | divided_by: 60000}} min</p>\n    <a href="#" style="display: inline-block; padding: 12px 24px; background: #7c3aed; color: white; text-decoration: none; border-radius: 8px; font-weight: 600;">Listen Now →</a>\n  </div>\n</div>\n{% else %}\n<p>No new episodes available.</p>\n{% endif %}'
             },
             {
                 id: 'single-simple',
                 title: 'Simple Text',
                 desc: 'Title and description only',
-                code: '{% if VAR._embedded.assets.size > 0 %}\n{% assign item = VAR._embedded.assets[0] %}\n<h2><a href="EPISODE_URL{{item.id}}" style="color: inherit; text-decoration: none;">{{item.title}}</a></h2>\n<p>{{item.description}}</p>\n<a href="EPISODE_URL{{item.id}}">Listen now →</a>\n{% endif %}'
-            },
-            {
-                id: 'single-with-image',
-                title: 'With Image',
-                desc: 'Card layout with thumbnail',
-                code: '{% if VAR._embedded.assets.size > 0 %}\n{% assign item = VAR._embedded.assets[0] %}\n<div style="border: 1px solid #ddd; border-radius: 8px; overflow: hidden;">\n  <a href="EPISODE_URL{{item.id}}">\n    <img src="{{item.images.main}}?t[]=480x270q80" style="width: 100%;">\n  </a>\n  <div style="padding: 16px;">\n    <h2>{{item.title}}</h2>\n    <p>{{item.description}}</p>\n    <a href="EPISODE_URL{{item.id}}" style="color: #7c3aed;">Listen now →</a>\n  </div>\n</div>\n{% endif %}'
+                code: '{% if VAR._embedded.assets.size > 0 %}\n{% assign item = VAR._embedded.assets[0] %}\n<h2>{{item.title}}</h2>\n<p>{{item.description}}</p>\n{% endif %}'
             }
         ],
         list: [
@@ -181,19 +164,34 @@ document.addEventListener('DOMContentLoaded', function () {
                 id: 'list-cards',
                 title: 'Card List',
                 desc: 'Visual cards with images',
-                code: '{% for item in VAR._embedded.assets %}\n<a href="EPISODE_URL{{item.id}}" style="display: flex; gap: 12px; margin-bottom: 16px; padding: 12px; border: 1px solid #eee; border-radius: 8px; text-decoration: none; color: inherit;">\n  <img src="{{item.images.main}}?t[]=80x80q80" style="width: 60px; height: 60px; border-radius: 8px; object-fit: cover;">\n  <div>\n    <h4 style="margin: 0 0 4px 0; color: #111;">{{item.title}}</h4>\n    <p style="margin: 0; color: #666; font-size: 14px;">{{item.category.title}}</p>\n    <small style="color: #999;">{{item.duration | divided_by: 60000}} min</small>\n  </div>\n</a>\n{% endfor %}'
+                code: '{% for item in VAR._embedded.assets %}\n<div style="display: flex; gap: 12px; margin-bottom: 16px; padding: 12px; border: 1px solid #eee; border-radius: 8px;">\n  <img src="{{item.images.main}}?t[]=80x80q80" style="width: 60px; height: 60px; border-radius: 8px; object-fit: cover;">\n  <div>\n    <h4 style="margin: 0 0 4px 0; color: #111;">{{item.title}}</h4>\n    <p style="margin: 0; color: #666; font-size: 14px;">{{item.category.title}}</p>\n    <small style="color: #999;">{{item.duration | divided_by: 60000}} min</small>\n  </div>\n</div>\n{% endfor %}'
             },
             {
                 id: 'list-simple',
                 title: 'Simple List',
                 desc: 'Bullet points',
-                code: '<ul>\n{% for item in VAR._embedded.assets %}\n  <li><a href="EPISODE_URL{{item.id}}">{{item.title}}</a></li>\n{% endfor %}\n</ul>'
+                code: '<ul>\n{% for item in VAR._embedded.assets %}\n  <li>{{item.title}}</li>\n{% endfor %}\n</ul>'
+            }
+        ],
+        sports: [
+            {
+                id: 'sports-match-card',
+                title: 'Sports Match Card',
+                desc: 'Perfect for upcoming match emails',
+                recommended: true,
+                code: '{% if VAR._embedded.assets.size > 0 %}\n{% assign match = VAR._embedded.assets[0] %}\n<div style="border: 2px solid #10b981; border-radius: 12px; overflow: hidden; max-width: 500px; background: linear-gradient(135deg, #ecfdf5 0%, #ffffff 100%);">\n  <img src="{{match.images.main}}?t[]=500x280q80" style="width: 100%; display: block;">\n  <div style="padding: 20px;">\n    <p style="margin: 0 0 8px 0; color: #059669; font-size: 14px; font-weight: 600;">⚽ LIVE SPORTS</p>\n    <h2 style="margin: 0 0 12px 0; font-size: 20px; color: #111827;">{{match.title}}</h2>\n    <p style="margin: 0 0 16px 0; color: #4b5563; font-size: 15px; line-height: 1.5;">{{match.description | truncate: 150}}</p>\n    {% if match.flightTimes.start %}\n    <p style="margin: 0 0 16px 0; color: #059669; font-size: 14px;">📅 Kick-off: {{match.flightTimes.start | date: "%b %d, %H:%M"}}</p>\n    {% endif %}\n    <a href="{{match.additional.url}}" style="display: inline-block; padding: 12px 24px; background: #10b981; color: white; text-decoration: none; border-radius: 8px; font-weight: 600;">Watch Live →</a>\n  </div>\n</div>\n{% else %}\n<p>No upcoming matches.</p>\n{% endif %}'
             },
             {
-                id: 'list-detailed',
-                title: 'Detailed List',
-                desc: 'With descriptions and dates',
-                code: '{% for item in VAR._embedded.assets %}\n<div style="margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid #eee;">\n  <h3 style="margin: 0 0 8px 0;"><a href="EPISODE_URL{{item.id}}" style="color: inherit; text-decoration: none;">{{item.title}}</a></h3>\n  <p style="margin: 0 0 8px 0; color: #666;">{{item.description | truncate: 120}}</p>\n  <small style="color: #999;">{{item.published | date: "%b %d, %Y"}} · <a href="EPISODE_URL{{item.id}}" style="color: #7c3aed;">Listen →</a></small>\n</div>\n{% endfor %}'
+                id: 'sports-list',
+                title: 'Match List',
+                desc: 'Multiple matches with kick-off times',
+                code: '<h2 style="margin: 0 0 16px 0; color: #059669;">⚽ Upcoming Matches</h2>\n{% for match in VAR._embedded.assets %}\n<div style="display: flex; gap: 12px; margin-bottom: 12px; padding: 12px; border: 1px solid #a7f3d0; border-radius: 8px; background: #f0fdf4;">\n  <img src="{{match.images.main}}?t[]=80x60q80" style="width: 80px; height: 60px; border-radius: 6px; object-fit: cover;">\n  <div style="flex: 1;">\n    <h4 style="margin: 0 0 4px 0; color: #111;">{{match.title}}</h4>\n    {% if match.flightTimes.start %}\n    <p style="margin: 0; color: #059669; font-size: 13px;">📅 {{match.flightTimes.start | date: "%b %d, %H:%M"}}</p>\n    {% endif %}\n  </div>\n</div>\n{% endfor %}'
+            },
+            {
+                id: 'sports-live-banner',
+                title: 'Live Now Banner',
+                desc: 'Highlight currently live match',
+                code: '{% if VAR._embedded.assets.size > 0 %}\n{% assign match = VAR._embedded.assets[0] %}\n<div style="background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%); border-radius: 12px; padding: 20px; color: white;">\n  <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">\n    <span style="display: inline-block; width: 10px; height: 10px; background: white; border-radius: 50%; animation: pulse 1.5s infinite;"></span>\n    <span style="font-weight: 600; font-size: 14px;">LIVE NOW</span>\n  </div>\n  <h2 style="margin: 0 0 8px 0; font-size: 22px;">{{match.title}}</h2>\n  <p style="margin: 0 0 16px 0; opacity: 0.9;">{{match.description | truncate: 100}}</p>\n  <a href="{{match.additional.url}}" style="display: inline-block; padding: 12px 24px; background: white; color: #dc2626; text-decoration: none; border-radius: 8px; font-weight: 600;">Watch Now →</a>\n</div>\n<style>@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }</style>\n{% endif %}'
             }
         ],
         digest: [
@@ -203,12 +201,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 desc: 'All podcasts in one list',
                 recommended: true,
                 code: '<!-- DIGEST_TEMPLATE -->'
-            },
-            {
-                id: 'digest-grouped',
-                title: 'Grouped by Podcast',
-                desc: 'Separate sections per podcast',
-                code: '<!-- DIGEST_GROUPED_TEMPLATE -->'
             }
         ],
         fallback: [
@@ -222,7 +214,7 @@ document.addEventListener('DOMContentLoaded', function () {
     };
 
     // ============================================
-    // PROVIDER NAMES
+    // PROVIDER CONFIGURATION
     // ============================================
 
     var providerNames = {
@@ -236,248 +228,24 @@ document.addEventListener('DOMContentLoaded', function () {
         'podme': 'Podme'
     };
 
-    // ============================================
-    // EPISODE URL PATTERNS (from ios-hermes-app)
-    // ============================================
-    // These patterns are used to construct clickable web URLs for podcast episodes
-    // Based on: PodcastKit/Player/PodcastURLSharing.swift
-
-    var providerUrlPatterns = {
-        'svd': {
-            baseUrl: 'https://www.svd.se',
-            episodePath: '/media/{id}',  // SVD uses custom pattern
-            programPath: null
-        },
-        'ab': {
-            baseUrl: 'https://www.aftonbladet.se',
-            episodePath: '/{provider}/episode/{id}',
-            programPath: '/{provider}/program/{id}'
-        },
-        'ap': {
-            baseUrl: 'https://www.aftenposten.no',
-            episodePath: '/{provider}/episode/{id}',
-            programPath: '/{provider}/program/{id}'
-        },
-        'bt': {
-            baseUrl: 'https://www.bt.no',
-            episodePath: '/{provider}/episode/{id}',
-            programPath: '/{provider}/program/{id}'
-        },
-        'aftenbladet': {
-            baseUrl: 'https://www.aftenbladet.no',
-            episodePath: '/{provider}/episode/{id}',
-            programPath: '/{provider}/program/{id}'
-        },
-        'e24': {
-            baseUrl: 'https://www.e24.no',
-            episodePath: '/{provider}/episode/{id}',
-            programPath: '/{provider}/program/{id}'
-        },
-        'vgtv': {
-            baseUrl: 'https://www.vg.no',
-            episodePath: '/{provider}/episode/{id}',
-            programPath: '/{provider}/program/{id}'
-        },
-        'podme': {
-            baseUrl: 'https://podme.com',
-            episodePath: null,  // Podme URLs need verification
-            programPath: null
-        }
-    };
-
-    /**
-     * Build a clickable web URL for a podcast episode
-     * @param {string} provider - The provider code (e.g., 'svd', 'ap', 'bt')
-     * @param {string|number} assetId - The asset ID from the SVP API
-     * @returns {string|null} - The constructed URL or null if not supported
-     */
-    function buildEpisodeUrl(provider, assetId) {
-        var pattern = providerUrlPatterns[provider];
-        if (!pattern || !pattern.episodePath) {
-            return null;
-        }
-
-        var url = pattern.baseUrl + pattern.episodePath;
-        url = url.replace('{id}', assetId);
-        url = url.replace('{provider}', provider);
-
-        return url;
-    }
-
-    /**
-     * Build a clickable web URL for a podcast program/series
-     * @param {string} provider - The provider code
-     * @param {string|number} categoryId - The category/series ID
-     * @returns {string|null} - The constructed URL or null if not supported
-     */
-    function buildProgramUrl(provider, categoryId) {
-        var pattern = providerUrlPatterns[provider];
-        if (!pattern || !pattern.programPath) {
-            return null;
-        }
-
-        var url = pattern.baseUrl + pattern.programPath;
-        url = url.replace('{id}', categoryId);
-        url = url.replace('{provider}', provider);
-
-        return url;
-    }
+    // Providers that have live sports content
+    var sportsProviders = ['vgtv', 'ab'];
 
     // ============================================
     // CURRENT STATE
     // ============================================
 
     var currentContentType = 'live';
-    var currentMode = 'single';
+    var currentMode = 'single'; // for podcasts
+    var currentTimeFilter = 'live'; // for sports
     var currentTemplate = null;
     var selectedSeries = [];
+    var selectedSportTags = [];
     var seriesData = [];
+    var sportTagsData = [];
     var generatedConnectedContent = '';
     var generatedLiquidCode = '';
     var previewDebounceTimer = null;
-    var isProviderSelected = false;
-
-    // ============================================
-    // DYNAMIC ISLAND
-    // ============================================
-
-    function updateIsland() {
-        var provider = providerSelect.value;
-
-        if (!provider) {
-            islandText.textContent = 'Select a provider to begin';
-            islandDot.className = 'island-dot';
-            dynamicIsland.classList.remove('expanded');
-            return;
-        }
-
-        var providerName = providerNames[provider] || provider;
-        var contentType = contentTypes[currentContentType];
-        var parts = [];
-
-        parts.push('📡 ' + providerName);
-        parts.push(contentType.title);
-
-        if (currentContentType === 'podcasts') {
-            if (currentMode === 'digest') {
-                parts.push('Digest Mode');
-                if (selectedSeries.length > 0) {
-                    parts.push(selectedSeries.length + ' selected');
-                }
-            } else if (selectedSeries.length > 0) {
-                parts.push(selectedSeries[0].title);
-            }
-        }
-
-        islandText.textContent = parts.join('  •  ');
-        islandDot.className = 'island-dot active';
-        dynamicIsland.classList.add('expanded');
-    }
-
-    function setIslandLoading(loading) {
-        if (loading) {
-            islandDot.className = 'island-dot loading';
-        } else {
-            islandDot.className = 'island-dot active';
-        }
-    }
-
-    // ============================================
-    // WELCOME STATE & PROVIDER SELECTION
-    // ============================================
-
-    function showBuilder() {
-        welcomeState.classList.add('hidden');
-        builderContent.classList.remove('hidden');
-        isProviderSelected = true;
-        updateIsland();
-        triggerAutoPreview();
-    }
-
-    // Welcome screen provider buttons
-    providerBtns.forEach(function (btn) {
-        btn.addEventListener('click', function () {
-            var provider = this.dataset.provider;
-
-            if (provider === 'more') {
-                // Show all providers modal or expand
-                showBuilder();
-                providerSelect.focus();
-                return;
-            }
-
-            providerSelect.value = provider;
-            showBuilder();
-            loadSeriesForProvider(provider);
-        });
-    });
-
-    // Main provider dropdown
-    providerSelect.addEventListener('change', function () {
-        var provider = this.value;
-
-        if (provider && !isProviderSelected) {
-            showBuilder();
-        }
-
-        if (provider) {
-            loadSeriesForProvider(provider);
-        } else {
-            seriesData = [];
-            selectedSeries = [];
-            renderSeriesList([]);
-        }
-
-        updateIsland();
-        updateGeneratedCode();
-        triggerAutoPreview();
-    });
-
-    // ============================================
-    // AUTO-LOAD SERIES (FIXED - uses metadata detection)
-    // ============================================
-
-    function loadSeriesForProvider(provider) {
-        if (!provider) return;
-
-        // Show loading state
-        seriesList.innerHTML = '<div class="series-loading"><div class="loading-spinner"></div><p>Loading podcasts...</p></div>';
-
-        // Fetch ALL categories - don't filter by isSeries (many podcasts have isSeries:false)
-        var url = 'https://svp.vg.no/svp/api/v1/' + provider + '/categories?appName=braze_content&limit=500';
-
-        fetch(url)
-            .then(function (response) {
-                if (!response.ok) throw new Error('Failed to fetch');
-                return response.json();
-            })
-            .then(function (data) {
-                var allCategories = data._embedded ? data._embedded.categories : [];
-
-                // Filter client-side: keep only categories with podcast metadata
-                // Real podcasts have podcast_author or podcast_type in their metadata
-                seriesData = allCategories.filter(function (cat) {
-                    if (!cat.additional || !cat.additional.metadata) return false;
-                    var meta = cat.additional.metadata;
-                    // Check for podcast-specific metadata fields
-                    return meta.podcast_author || meta.podcast_type || meta.podcast_acast_showId;
-                });
-
-                console.log('Categories fetched:', allCategories.length, '| Podcasts found:', seriesData.length);
-
-                renderSeriesList(seriesData);
-
-                if (seriesData.length > 0) {
-                    showToast('Loaded ' + seriesData.length + ' podcast series');
-                } else if (allCategories.length > 0) {
-                    showToast('No podcasts found for this provider');
-                }
-            })
-            .catch(function (error) {
-                console.error('Error fetching series:', error);
-                seriesList.innerHTML = '<div class="series-empty"><p>Could not load series. Check provider and try again.</p></div>';
-            });
-    }
 
     // ============================================
     // NAVIGATION
@@ -487,9 +255,7 @@ document.addEventListener('DOMContentLoaded', function () {
         item.addEventListener('click', function () {
             var type = this.dataset.type;
 
-            navItems.forEach(function (nav) {
-                nav.classList.remove('active');
-            });
+            navItems.forEach(function (nav) { nav.classList.remove('active'); });
             this.classList.add('active');
 
             currentContentType = type;
@@ -500,30 +266,26 @@ document.addEventListener('DOMContentLoaded', function () {
 
             renderPresetCards(config.presets);
 
-            if (type === 'podcasts') {
-                generalFilters.classList.add('hidden');
-                podcastFilters.classList.remove('hidden');
+            // Show/hide appropriate filter sections
+            generalFilters.classList.add('hidden');
+            sportsFilters.classList.add('hidden');
+            podcastFilters.classList.add('hidden');
 
-                // Auto-load series if provider is selected
+            if (type === 'sports') {
+                sportsFilters.classList.remove('hidden');
+                updateSportsProviderHint();
+            } else if (type === 'podcasts') {
+                podcastFilters.classList.remove('hidden');
                 if (providerSelect.value) {
                     loadSeriesForProvider(providerSelect.value);
                 }
             } else {
                 generalFilters.classList.remove('hidden');
-                podcastFilters.classList.add('hidden');
-            }
-
-            if (config.showTags) {
-                quickTags.classList.add('visible');
-            } else {
-                quickTags.classList.remove('visible');
             }
 
             // Reset state
-            selectedSeries = [];
-            currentMode = 'single';
-            updateModeUI();
-            updateIsland();
+            selectedSportTags = [];
+            updateSelectedTagsCount();
             updateGeneratedCode();
             renderTemplateList();
             triggerAutoPreview();
@@ -531,45 +293,52 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     // ============================================
-    // MODE TOGGLE (Single / Digest)
+    // PROVIDER SELECTION
     // ============================================
 
-    modeBtns.forEach(function (btn) {
-        btn.addEventListener('click', function () {
-            modeBtns.forEach(function (b) { b.classList.remove('active'); });
-            this.classList.add('active');
+    providerSelect.addEventListener('change', function () {
+        var provider = this.value;
 
-            currentMode = this.dataset.mode;
-            updateModeUI();
-            updateIsland();
-            updateGeneratedCode();
-            renderTemplateList();
-            triggerAutoPreview();
-        });
-    });
+        // Clear selections when switching providers
+        selectedSeries = [];
+        selectedSportTags = [];
+        sportTagsData = [];
+        updateSelectedCount();
+        updateSelectedTagsCount();
 
-    function updateModeUI() {
-        if (currentMode === 'digest') {
-            modeInfo.innerHTML = '<div class="mode-info-icon">📰</div><div class="mode-info-text"><strong>Digest Mode:</strong> Select multiple podcasts to create a "released this week" roundup. Each podcast gets its own API call.</div>';
-            seriesLabel.textContent = 'SELECT PODCASTS (Multi-select)';
-            podcastLimit.value = 1;
-            seriesSelectedCount.classList.remove('hidden');
-            updateSelectedCount();
+        if (provider) {
+            if (currentContentType === 'podcasts') {
+                loadSeriesForProvider(provider);
+            } else if (currentContentType === 'sports') {
+                updateSportsProviderHint();
+                // Clear sport tags when provider changes
+                sportTagsList.innerHTML = '<div class="sport-tags-empty"><p>Click "Load Tags" to see available sports</p></div>';
+            }
         } else {
-            modeInfo.innerHTML = '<div class="mode-info-icon">💡</div><div class="mode-info-text"><strong>Single Podcast Mode:</strong> Fetch episodes from one podcast. Perfect for automated "new episode" emails.</div>';
-            seriesLabel.textContent = 'SELECT PODCAST SERIES';
-            seriesSelectedCount.classList.add('hidden');
+            seriesData = [];
+            renderSeriesList([]);
+            sportTagsList.innerHTML = '<div class="sport-tags-empty"><p>Select a provider first</p></div>';
         }
 
-        // Re-render series list with correct input type
-        if (seriesData.length > 0) {
-            renderSeriesList(seriesData);
-        }
-    }
+        updateGeneratedCode();
+        triggerAutoPreview();
+    });
 
-    function updateSelectedCount() {
-        var count = selectedSeries.length;
-        selectedCountText.textContent = count + ' podcast' + (count !== 1 ? 's' : '') + ' selected';
+    function updateSportsProviderHint() {
+        var provider = providerSelect.value;
+        if (currentContentType === 'sports') {
+            if (provider && sportsProviders.includes(provider)) {
+                providerHint.textContent = '✓ This provider has live sports';
+                providerHint.style.color = '#10B981';
+            } else if (provider) {
+                providerHint.textContent = '⚠️ Limited sports content - try VGTV or Aftonbladet';
+                providerHint.style.color = '#F59E0B';
+            } else {
+                providerHint.textContent = '';
+            }
+        } else {
+            providerHint.textContent = '';
+        }
     }
 
     // ============================================
@@ -581,8 +350,9 @@ document.addEventListener('DOMContentLoaded', function () {
         presets.forEach(function (preset, index) {
             var activeClass = index === 0 ? ' active' : '';
             var featuredClass = preset.featured ? ' featured' : '';
+            var sportsClass = currentContentType === 'sports' ? ' sports-card' : '';
 
-            html += '<div class="preset-card' + activeClass + featuredClass + '" data-preset="' + preset.preset + '">';
+            html += '<div class="preset-card' + activeClass + featuredClass + sportsClass + '" data-preset="' + preset.preset + '">';
             html += '<div class="preset-icon">' + preset.icon + '</div>';
             html += '<div class="preset-title">' + preset.title + '</div>';
             html += '<div class="preset-desc">' + preset.desc + '</div>';
@@ -598,17 +368,30 @@ document.addEventListener('DOMContentLoaded', function () {
             card.addEventListener('click', function () {
                 cards.forEach(function (c) { c.classList.remove('active'); });
                 this.classList.add('active');
-
-                var preset = this.dataset.preset;
-                applyPreset(preset);
+                applyPreset(this.dataset.preset);
             });
         });
     }
 
     function applyPreset(preset) {
-        if (currentContentType !== 'podcasts') return;
+        if (currentContentType === 'sports') {
+            applySportsPreset(preset);
+        } else if (currentContentType === 'podcasts') {
+            applyPodcastPreset(preset);
+        }
+        updateGeneratedCode();
+        triggerAutoPreview();
+    }
 
-        // Reset first
+    function applySportsPreset(preset) {
+        // Update time filter based on preset
+        currentTimeFilter = preset;
+        timeBtns.forEach(function (btn) {
+            btn.classList.toggle('active', btn.dataset.time === preset);
+        });
+    }
+
+    function applyPodcastPreset(preset) {
         podcastContentType.value = '';
         podcastAccess.value = '';
         podcastSort.value = '-published';
@@ -618,34 +401,214 @@ document.addEventListener('DOMContentLoaded', function () {
             case 'latest-single':
                 currentMode = 'single';
                 podcastLimit.value = 1;
-                podcastSort.value = '-published';
                 updateModeToggle('single');
-                showToast('Set to fetch 1 latest episode');
                 break;
-
             case 'weekly-digest':
                 currentMode = 'digest';
                 podcastLimit.value = 1;
                 podcastDateFilter.value = '7';
                 updateModeToggle('digest');
-                showToast('Digest mode - select podcasts below');
                 break;
-
             case 'episodes':
                 podcastContentType.value = 'episodes';
                 break;
-
             case 'latest':
                 podcastLimit.value = 10;
                 break;
         }
-
         updateModeUI();
-        updateIsland();
         renderTemplateList();
+    }
+
+    // ============================================
+    // SPORTS: TIME FILTER
+    // ============================================
+
+    timeBtns.forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            timeBtns.forEach(function (b) { b.classList.remove('active'); });
+            this.classList.add('active');
+            currentTimeFilter = this.dataset.time;
+            updateGeneratedCode();
+            triggerAutoPreview();
+        });
+    });
+
+    // ============================================
+    // SPORTS: LOAD TAGS
+    // ============================================
+
+    loadSportTagsBtn.addEventListener('click', function () {
+        var provider = providerSelect.value;
+        if (!provider) {
+            showToast('Please select a provider first');
+            return;
+        }
+        loadSportTags(provider);
+    });
+
+    function loadSportTags(provider) {
+        loadSportTagsBtn.classList.add('loading');
+        loadSportTagsBtn.disabled = true;
+
+        // First, fetch some sports assets to discover which tags are actually used
+        var url = 'https://svp.vg.no/svp/api/v1/' + provider + '/search?appName=svpBuilder&filter=streamType::live|additional.metadata.contentType::liveSports&limit=50&additional=settings,metadata,tags';
+
+        fetch(url)
+            .then(function (response) {
+                if (!response.ok) throw new Error('Failed to fetch');
+                return response.json();
+            })
+            .then(function (data) {
+                var assets = data._embedded && data._embedded.assets ? data._embedded.assets : [];
+
+                // Extract unique tags from assets
+                var tagMap = {};
+                assets.forEach(function (asset) {
+                    if (asset._embedded && asset._embedded.tags) {
+                        asset._embedded.tags.forEach(function (tag) {
+                            if (!tagMap[tag.id]) {
+                                tagMap[tag.id] = { id: tag.id, name: tag.tag, count: 0 };
+                            }
+                            tagMap[tag.id].count++;
+                        });
+                    }
+                });
+
+                // Convert to array and sort by count
+                sportTagsData = Object.values(tagMap).sort(function (a, b) {
+                    return b.count - a.count;
+                });
+
+                renderSportTags(sportTagsData);
+
+                if (sportTagsData.length > 0) {
+                    showToast('Loaded ' + sportTagsData.length + ' sport tags');
+                } else {
+                    showToast('No sport tags found');
+                }
+            })
+            .catch(function (error) {
+                console.error('Error fetching sport tags:', error);
+                sportTagsList.innerHTML = '<div class="sport-tags-empty"><p>Failed to load tags. Try again.</p></div>';
+            })
+            .finally(function () {
+                loadSportTagsBtn.classList.remove('loading');
+                loadSportTagsBtn.disabled = false;
+            });
+    }
+
+    function renderSportTags(tags) {
+        if (!tags || tags.length === 0) {
+            sportTagsList.innerHTML = '<div class="sport-tags-empty"><p>No sport tags found for this provider</p></div>';
+            return;
+        }
+
+        var html = '';
+        tags.forEach(function (tag) {
+            var isSelected = selectedSportTags.some(function (t) { return t.id === tag.id; });
+            var activeClass = isSelected ? ' active' : '';
+            var icon = getSportIcon(tag.name);
+
+            html += '<button class="sport-tag' + activeClass + '" data-id="' + tag.id + '" data-name="' + escapeHtml(tag.name) + '">';
+            html += '<span class="sport-tag-icon">' + icon + '</span>';
+            html += '<span>' + escapeHtml(tag.name) + '</span>';
+            if (tag.count > 1) {
+                html += '<span class="sport-tag-count">(' + tag.count + ')</span>';
+            }
+            html += '</button>';
+        });
+
+        sportTagsList.innerHTML = html;
+
+        // Attach click handlers
+        var tagBtns = sportTagsList.querySelectorAll('.sport-tag');
+        tagBtns.forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var id = this.dataset.id;
+                var name = this.dataset.name;
+
+                this.classList.toggle('active');
+
+                if (this.classList.contains('active')) {
+                    selectedSportTags.push({ id: id, name: name });
+                } else {
+                    selectedSportTags = selectedSportTags.filter(function (t) { return t.id !== id; });
+                }
+
+                updateSelectedTagsCount();
+                updateGeneratedCode();
+                triggerAutoPreview();
+            });
+        });
+    }
+
+    function getSportIcon(name) {
+        var lowerName = name.toLowerCase();
+        if (lowerName.includes('fotball') || lowerName.includes('football') || lowerName.includes('soccer')) return '⚽';
+        if (lowerName.includes('hockey') || lowerName.includes('ishockey')) return '🏒';
+        if (lowerName.includes('handball') || lowerName.includes('håndball')) return '🤾';
+        if (lowerName.includes('basketball')) return '🏀';
+        if (lowerName.includes('tennis')) return '🎾';
+        if (lowerName.includes('golf')) return '⛳';
+        if (lowerName.includes('ski') || lowerName.includes('langrenn')) return '⛷️';
+        if (lowerName.includes('premier league')) return '🏴󠁧󠁢󠁥󠁮󠁧󠁿';
+        if (lowerName.includes('allsvenskan')) return '🇸🇪';
+        if (lowerName.includes('eliteserien')) return '🇳🇴';
+        if (lowerName.includes('champions')) return '🏆';
+        if (lowerName.includes('coppa')) return '🏆';
+        return '🏅';
+    }
+
+    function updateSelectedTagsCount() {
+        var count = selectedSportTags.length;
+        if (count > 0) {
+            selectedTagsCount.classList.remove('hidden');
+            tagsCountText.textContent = count + ' sport' + (count !== 1 ? 's' : '') + ' selected';
+        } else {
+            selectedTagsCount.classList.add('hidden');
+        }
+    }
+
+    clearTagsBtn.addEventListener('click', function () {
+        selectedSportTags = [];
+        var tagBtns = sportTagsList.querySelectorAll('.sport-tag');
+        tagBtns.forEach(function (btn) { btn.classList.remove('active'); });
+        updateSelectedTagsCount();
         updateGeneratedCode();
         triggerAutoPreview();
-    }
+    });
+
+    resetSportsFilters.addEventListener('click', function () {
+        currentTimeFilter = 'live';
+        timeBtns.forEach(function (btn) {
+            btn.classList.toggle('active', btn.dataset.time === 'live');
+        });
+        sportsLimit.value = 10;
+        sportsSort.value = 'flightTimes.start';
+        selectedSportTags = [];
+        var tagBtns = sportTagsList.querySelectorAll('.sport-tag');
+        tagBtns.forEach(function (btn) { btn.classList.remove('active'); });
+        updateSelectedTagsCount();
+        updateGeneratedCode();
+        triggerAutoPreview();
+    });
+
+    // ============================================
+    // PODCASTS: MODE TOGGLE
+    // ============================================
+
+    modeBtns.forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            modeBtns.forEach(function (b) { b.classList.remove('active'); });
+            this.classList.add('active');
+            currentMode = this.dataset.mode;
+            updateModeUI();
+            updateGeneratedCode();
+            renderTemplateList();
+            triggerAutoPreview();
+        });
+    });
 
     function updateModeToggle(mode) {
         modeBtns.forEach(function (btn) {
@@ -653,9 +616,78 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    function updateModeUI() {
+        if (currentMode === 'digest') {
+            modeInfo.innerHTML = '<div class="mode-info-icon">📰</div><div class="mode-info-text"><strong>Digest Mode:</strong> Select multiple podcasts to create a "released this week" roundup.</div>';
+            seriesLabel.textContent = 'SELECT PODCASTS (Multi-select)';
+            seriesSelectedCount.classList.remove('hidden');
+        } else {
+            modeInfo.innerHTML = '<div class="mode-info-icon">💡</div><div class="mode-info-text"><strong>Single Podcast Mode:</strong> Fetch episodes from one podcast. Perfect for automated "new episode" emails.</div>';
+            seriesLabel.textContent = 'SELECT PODCAST SERIES';
+            seriesSelectedCount.classList.add('hidden');
+        }
+
+        if (seriesData.length > 0) {
+            renderSeriesList(seriesData);
+        }
+        updateSelectedCount();
+    }
+
+    function updateSelectedCount() {
+        var count = selectedSeries.length;
+        selectedCountText.textContent = count + ' podcast' + (count !== 1 ? 's' : '') + ' selected';
+    }
+
     // ============================================
-    // SERIES LIST
+    // PODCASTS: LOAD SERIES
     // ============================================
+
+    fetchSeriesBtn.addEventListener('click', function () {
+        var provider = providerSelect.value;
+        if (provider) {
+            loadSeriesForProvider(provider);
+        } else {
+            showToast('Please select a provider first');
+        }
+    });
+
+    function loadSeriesForProvider(provider) {
+        if (!provider) return;
+
+        seriesList.innerHTML = '<div class="series-loading"><div class="loading-spinner"></div><p>Loading podcasts...</p></div>';
+
+        var url = 'https://svp.vg.no/svp/api/v1/' + provider + '/categories?appName=svpBuilder&limit=500';
+
+        fetch(url)
+            .then(function (response) {
+                if (!response.ok) throw new Error('Failed to fetch');
+                return response.json();
+            })
+            .then(function (data) {
+                var allCategories = data._embedded ? data._embedded.categories : [];
+
+                // Filter for podcasts using metadata
+                seriesData = allCategories.filter(function (cat) {
+                    if (!cat.additional || !cat.additional.metadata) return false;
+                    var meta = cat.additional.metadata;
+                    return meta.podcast_author || meta.podcast_type || meta.podcast_acast_showId;
+                });
+
+                console.log('Categories fetched:', allCategories.length, '| Podcasts found:', seriesData.length);
+
+                renderSeriesList(seriesData);
+
+                if (seriesData.length > 0) {
+                    showToast('Loaded ' + seriesData.length + ' podcast series');
+                } else {
+                    showToast('No podcasts found for this provider');
+                }
+            })
+            .catch(function (error) {
+                console.error('Error fetching series:', error);
+                seriesList.innerHTML = '<div class="series-empty"><p>Could not load series. Try again.</p></div>';
+            });
+    }
 
     function renderSeriesList(categories) {
         if (!categories || categories.length === 0) {
@@ -694,7 +726,7 @@ document.addEventListener('DOMContentLoaded', function () {
         // Attach click handlers
         var items = seriesList.querySelectorAll('.series-item');
         items.forEach(function (item) {
-            item.addEventListener('click', function (e) {
+            item.addEventListener('click', function () {
                 var id = this.dataset.id;
                 var title = this.dataset.title;
                 var checkbox = this.querySelector('input');
@@ -724,7 +756,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     }
                 }
 
-                updateIsland();
                 updateGeneratedCode();
                 triggerAutoPreview();
             });
@@ -754,7 +785,12 @@ document.addEventListener('DOMContentLoaded', function () {
         var html = '';
         var templateGroups = [];
 
-        if (currentContentType === 'podcasts') {
+        if (currentContentType === 'sports') {
+            templateGroups = [
+                { name: 'Sports Templates', templates: templates.sports },
+                { name: 'With Fallback', templates: templates.fallback }
+            ];
+        } else if (currentContentType === 'podcasts') {
             if (currentMode === 'digest') {
                 templateGroups = [
                     { name: 'Digest Templates', templates: templates.digest },
@@ -818,6 +854,7 @@ document.addEventListener('DOMContentLoaded', function () {
         var allTemplates = [].concat(
             templates.single,
             templates.list,
+            templates.sports,
             templates.digest,
             templates.fallback
         );
@@ -834,11 +871,53 @@ document.addEventListener('DOMContentLoaded', function () {
 
         var baseUrl = 'https://svp.vg.no/svp/api/v1/' + provider;
         var filters = [];
-        var params = ['appName=braze_content'];
+        var params = ['appName=svpBuilder'];
 
-        if (currentContentType === 'podcasts') {
+        if (currentContentType === 'sports') {
             baseUrl += '/search';
-            filters.push('assetType::audio');
+
+            // Add live sports filters
+            filters.push('streamType::live');
+            filters.push('additional.metadata.contentType::liveSports');
+
+            // Add time-based filtering
+            var now = Date.now();
+            switch (currentTimeFilter) {
+                case 'live':
+                    // Currently live - no additional time filter needed, just live streams
+                    break;
+                case 'today':
+                    var endOfDay = new Date();
+                    endOfDay.setHours(23, 59, 59, 999);
+                    filters.push('flightTimes.start<' + endOfDay.getTime());
+                    break;
+                case 'week':
+                    var weekFromNow = now + (7 * 24 * 60 * 60 * 1000);
+                    filters.push('flightTimes.start<' + weekFromNow);
+                    break;
+                case 'upcoming':
+                    filters.push('flightTimes.start>' + now);
+                    break;
+                // 'all' - no time filter
+            }
+
+            // Add tag filter if any selected
+            if (selectedSportTags.length > 0) {
+                var tagIds = selectedSportTags.map(function (t) { return t.id; }).join(',');
+                filters.push('tagId<>' + tagIds);
+            }
+
+            params.push('limit=' + (sportsLimit.value || 10));
+            params.push('sort=' + sportsSort.value);
+            params.push('additional=settings,metadata,tags');
+
+        } else if (currentContentType === 'podcasts') {
+            if (seriesId) {
+                baseUrl += '/categories/' + seriesId + '/assets';
+            } else {
+                baseUrl += '/search';
+                filters.push('assetType::audio');
+            }
 
             if (podcastContentType.value === 'episodes') {
                 filters.push('series.episodeNumber>0');
@@ -858,10 +937,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 filters.push('published>' + since);
             }
 
-            if (seriesId) {
-                filters.push('categoryId::' + seriesId);
-            }
-
             params.push('limit=' + (podcastLimit.value || 10));
             params.push('sort=' + podcastSort.value);
             params.push('additional=settings,metadata,access');
@@ -871,22 +946,13 @@ document.addEventListener('DOMContentLoaded', function () {
             var config = contentTypes[currentContentType];
 
             if (config.filter) {
-                filters.push(config.filter);
+                config.filter.split('|').forEach(function (f) {
+                    filters.push(f);
+                });
             }
 
             if (filterCategory.value) {
                 filters.push('categoryId::' + filterCategory.value);
-            }
-
-            if (currentContentType === 'sports') {
-                var activeTags = document.querySelectorAll('.quick-tag.active');
-                if (activeTags.length > 0) {
-                    var sports = [];
-                    activeTags.forEach(function (tag) {
-                        sports.push(tag.dataset.sport);
-                    });
-                    filters.push('additional.metadata.sportType<>' + sports.join(','));
-                }
             }
 
             params.push('limit=' + (filterLimit.value || 10));
@@ -906,10 +972,9 @@ document.addEventListener('DOMContentLoaded', function () {
         var varName = variableInput.value || 'content';
 
         if (!provider) {
-            generatedConnectedContent = '// Select a provider to generate code';
-            generatedLiquidCode = '// Select a provider to generate code';
-            connectedSubtitle.textContent = 'Select a provider first';
-            liquidSubtitle.textContent = 'Select a provider first';
+            brazeCode.textContent = '// Select a provider to generate code';
+            readableUrl.textContent = 'https://svp.vg.no/...';
+            liquidCode.textContent = '// Select a provider to generate code';
             return;
         }
 
@@ -922,42 +987,30 @@ document.addEventListener('DOMContentLoaded', function () {
                 code += '{% connected_content ' + url + ' :save ' + seriesVarName + ' %}\n';
             });
             generatedConnectedContent = code.trim();
-            connectedSubtitle.textContent = selectedSeries.length + ' API calls ready';
+            brazeCode.textContent = generatedConnectedContent;
+            readableUrl.textContent = '(Multiple API calls - see above)';
         } else {
-            var seriesId = currentMode === 'single' && selectedSeries.length > 0
+            var seriesId = currentContentType === 'podcasts' && selectedSeries.length > 0
                 ? selectedSeries[0].id
                 : null;
             var url = buildUrl(seriesId);
             generatedConnectedContent = '{% connected_content ' + url + ' :save ' + varName + ' %}';
-            connectedSubtitle.textContent = '1 API call ready';
+            brazeCode.textContent = generatedConnectedContent;
+            readableUrl.textContent = url || '';
         }
 
         // Generate Liquid Code
         if (!currentTemplate) {
-            generatedLiquidCode = '// Select a template';
-            liquidSubtitle.textContent = 'Select a template';
+            liquidCode.textContent = '// Select a template';
             return;
         }
 
-        if (currentMode === 'digest' && selectedSeries.length > 0) {
+        if (currentContentType === 'podcasts' && currentMode === 'digest' && selectedSeries.length > 0) {
             generatedLiquidCode = generateDigestTemplate();
-            liquidSubtitle.textContent = 'Digest template ready';
         } else {
-            var liquidCode = currentTemplate.code.replace(/VAR/g, varName);
-
-            // Replace EPISODE_URL placeholder with actual URL pattern for the provider
-            var urlPattern = providerUrlPatterns[provider];
-            if (urlPattern && urlPattern.episodePath) {
-                var baseEpisodeUrl = urlPattern.baseUrl + urlPattern.episodePath.replace('{provider}', provider).replace('{id}', '');
-                liquidCode = liquidCode.replace(/EPISODE_URL/g, baseEpisodeUrl);
-            } else {
-                // Remove links if no URL pattern available for this provider
-                liquidCode = liquidCode.replace(/EPISODE_URL\{\{[^}]+\}\}/g, '#');
-            }
-
-            generatedLiquidCode = liquidCode;
-            liquidSubtitle.textContent = currentTemplate.title + ' ready';
+            generatedLiquidCode = currentTemplate.code.replace(/VAR/g, varName);
         }
+        liquidCode.textContent = generatedLiquidCode;
     }
 
     function generateDigestTemplate() {
@@ -965,74 +1018,24 @@ document.addEventListener('DOMContentLoaded', function () {
             return '<!-- Select podcasts to generate digest template -->';
         }
 
-        var provider = providerSelect.value;
-        var urlPattern = providerUrlPatterns[provider];
-        var hasUrls = urlPattern && urlPattern.episodePath;
-        var baseEpisodeUrl = hasUrls
-            ? urlPattern.baseUrl + urlPattern.episodePath.replace('{provider}', provider).replace('{id}', '')
-            : '';
+        var code = '<h2 style="margin: 0 0 16px 0;">🎧 This Week\'s Episodes</h2>\n\n';
 
-        var isGrouped = currentTemplate && currentTemplate.id === 'digest-grouped';
-        var code = '';
-
-        if (isGrouped) {
-            selectedSeries.forEach(function (series, index) {
-                var varName = 'podcast_' + (index + 1);
-                code += '<!-- ' + series.title + ' -->\n';
-                code += '{% if ' + varName + '._embedded.assets.size > 0 %}\n';
-                code += '<div style="margin-bottom: 24px;">\n';
-                code += '  <h3 style="margin: 0 0 12px 0; color: #7c3aed;">🎙️ ' + series.title + '</h3>\n';
-                code += '  {% assign episode = ' + varName + '._embedded.assets[0] %}\n';
-                if (hasUrls) {
-                    code += '  <a href="' + baseEpisodeUrl + '{{episode.id}}" style="display: flex; gap: 12px; padding: 12px; border: 1px solid #e5e7eb; border-radius: 8px; text-decoration: none; color: inherit;">\n';
-                } else {
-                    code += '  <div style="display: flex; gap: 12px; padding: 12px; border: 1px solid #e5e7eb; border-radius: 8px;">\n';
-                }
-                code += '    <img src="{{episode.images.main}}?t[]=80x80q80" style="width: 60px; height: 60px; border-radius: 8px;">\n';
-                code += '    <div>\n';
-                code += '      <h4 style="margin: 0 0 4px 0; color: #111;">{{episode.title}}</h4>\n';
-                code += '      <p style="margin: 0; color: #666; font-size: 14px;">{{episode.duration | divided_by: 60000}} min</p>\n';
-                code += '    </div>\n';
-                if (hasUrls) {
-                    code += '  </a>\n';
-                } else {
-                    code += '  </div>\n';
-                }
-                code += '</div>\n';
-                code += '{% endif %}\n\n';
-            });
-        } else {
-            code += '<h2 style="margin: 0 0 16px 0;">🎧 This Week\'s Episodes</h2>\n\n';
-
-            selectedSeries.forEach(function (series, index) {
-                var varName = 'podcast_' + (index + 1);
-                code += '{% if ' + varName + '._embedded.assets.size > 0 %}\n';
-                code += '{% assign episode = ' + varName + '._embedded.assets[0] %}\n';
-                if (hasUrls) {
-                    code += '<a href="' + baseEpisodeUrl + '{{episode.id}}" style="display: flex; gap: 12px; margin-bottom: 16px; padding: 12px; border: 1px solid #e5e7eb; border-radius: 8px; text-decoration: none; color: inherit;">\n';
-                } else {
-                    code += '<div style="display: flex; gap: 12px; margin-bottom: 16px; padding: 12px; border: 1px solid #e5e7eb; border-radius: 8px;">\n';
-                }
-                code += '  <img src="{{episode.images.main}}?t[]=80x80q80" style="width: 60px; height: 60px; border-radius: 8px;">\n';
-                code += '  <div>\n';
-                code += '    <p style="margin: 0 0 4px 0; color: #7c3aed; font-size: 12px; font-weight: 600;">' + series.title + '</p>\n';
-                code += '    <h4 style="margin: 0 0 4px 0; color: #111;">{{episode.title}}</h4>\n';
-                code += '    <p style="margin: 0; color: #666; font-size: 14px;">{{episode.duration | divided_by: 60000}} min</p>\n';
-                code += '  </div>\n';
-                if (hasUrls) {
-                    code += '</a>\n';
-                } else {
-                    code += '</div>\n';
-                }
-                code += '{% endif %}\n\n';
-            });
-        }
+        selectedSeries.forEach(function (series, index) {
+            var varName = 'podcast_' + (index + 1);
+            code += '{% if ' + varName + '._embedded.assets.size > 0 %}\n';
+            code += '{% assign episode = ' + varName + '._embedded.assets[0] %}\n';
+            code += '<div style="display: flex; gap: 12px; margin-bottom: 16px; padding: 12px; border: 1px solid #e5e7eb; border-radius: 8px;">\n';
+            code += '  <img src="{{episode.images.main}}?t[]=80x80q80" style="width: 60px; height: 60px; border-radius: 8px;">\n';
+            code += '  <div>\n';
+            code += '    <p style="margin: 0 0 4px 0; color: #7c3aed; font-size: 12px; font-weight: 600;">' + series.title + '</p>\n';
+            code += '    <h4 style="margin: 0 0 4px 0; color: #111;">{{episode.title}}</h4>\n';
+            code += '    <p style="margin: 0; color: #666; font-size: 14px;">{{episode.duration | divided_by: 60000}} min</p>\n';
+            code += '  </div>\n';
+            code += '</div>\n';
+            code += '{% endif %}\n\n';
+        });
 
         return code;
-    }
-
-    function getCompleteCode() {
-        return generatedConnectedContent + '\n\n' + generatedLiquidCode;
     }
 
     // ============================================
@@ -1042,41 +1045,30 @@ document.addEventListener('DOMContentLoaded', function () {
     function triggerAutoPreview() {
         if (!providerSelect.value) return;
 
-        // Clear existing timer
         if (previewDebounceTimer) {
             clearTimeout(previewDebounceTimer);
         }
 
-        // Show loading state
-        setPreviewLoading(true);
-
-        // Debounce - wait 600ms after last change
         previewDebounceTimer = setTimeout(function () {
             loadPreview();
         }, 600);
     }
 
-    function setPreviewLoading(loading) {
-        if (loading) {
-            previewStatus.classList.add('loading');
-            previewStatus.querySelector('.preview-status-text').textContent = 'Updating...';
-        } else {
-            previewStatus.classList.remove('loading');
-            previewStatus.querySelector('.preview-status-text').textContent = 'Auto-updates';
-        }
-    }
+    previewBtn.addEventListener('click', function () {
+        loadPreview();
+    });
 
     function loadPreview() {
         var provider = providerSelect.value;
         if (!provider) {
             previewContent.innerHTML = '<div class="preview-empty"><div class="preview-empty-icon">📡</div><p>Select a provider to see preview</p></div>';
-            setPreviewLoading(false);
             return;
         }
 
-        setIslandLoading(true);
+        previewBtn.classList.add('loading');
+        previewBtn.textContent = 'Loading...';
 
-        if (currentMode === 'digest' && selectedSeries.length > 0) {
+        if (currentContentType === 'podcasts' && currentMode === 'digest' && selectedSeries.length > 0) {
             var promises = selectedSeries.map(function (series) {
                 var url = buildUrl(series.id);
                 return fetch(url)
@@ -1095,11 +1087,11 @@ document.addEventListener('DOMContentLoaded', function () {
                     previewContent.innerHTML = '<div class="preview-error">Failed to load preview.</div>';
                 })
                 .finally(function () {
-                    setPreviewLoading(false);
-                    setIslandLoading(false);
+                    previewBtn.classList.remove('loading');
+                    previewBtn.textContent = 'Load Preview';
                 });
         } else {
-            var seriesId = selectedSeries.length > 0 ? selectedSeries[0].id : null;
+            var seriesId = currentContentType === 'podcasts' && selectedSeries.length > 0 ? selectedSeries[0].id : null;
             var url = buildUrl(seriesId);
 
             fetch(url)
@@ -1116,8 +1108,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     previewCount.textContent = '';
                 })
                 .finally(function () {
-                    setPreviewLoading(false);
-                    setIslandLoading(false);
+                    previewBtn.classList.remove('loading');
+                    previewBtn.textContent = 'Load Preview';
                 });
         }
     }
@@ -1164,7 +1156,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function renderAssetList(assets) {
         var html = '';
-        var provider = providerSelect.value;
+        var isSports = currentContentType === 'sports';
 
         assets.forEach(function (asset) {
             var imageUrl = asset.images && asset.images.main
@@ -1175,17 +1167,24 @@ document.addEventListener('DOMContentLoaded', function () {
                 ? Math.floor(asset.duration / 60000) + ' min'
                 : '';
 
-            var badge = '';
+            var badges = '';
             if (asset.streamType === 'live') {
-                badge = '<span class="preview-badge live">LIVE</span>';
+                badges += '<span class="preview-badge live">LIVE</span>';
             } else if (asset.assetType === 'audio') {
-                badge = '<span class="preview-badge audio">AUDIO</span>';
+                badges += '<span class="preview-badge audio">AUDIO</span>';
             }
 
-            // Build episode URL for clickable link
-            var episodeUrl = buildEpisodeUrl(provider, asset.id);
+            if (isSports && asset.flightTimes && asset.flightTimes.start) {
+                var startTime = new Date(asset.flightTimes.start);
+                var now = new Date();
+                if (startTime > now) {
+                    badges += '<span class="preview-badge upcoming">UPCOMING</span>';
+                }
+            }
 
-            html += '<div class="preview-item">';
+            var itemClass = isSports ? 'preview-item sports-item' : 'preview-item';
+
+            html += '<div class="' + itemClass + '">';
             if (imageUrl) {
                 html += '<img src="' + imageUrl + '" class="preview-thumb" alt="">';
             }
@@ -1195,16 +1194,28 @@ document.addEventListener('DOMContentLoaded', function () {
                 html += '<div class="preview-item-desc">' + escapeHtml(asset.description) + '</div>';
             }
             html += '<div class="preview-item-meta">';
-            if (badge) html += badge;
+            if (badges) html += badges;
             if (asset.category && asset.category.title) {
                 html += '<span>' + escapeHtml(asset.category.title) + '</span>';
             }
             if (duration) html += '<span>' + duration + '</span>';
-            // Show episode URL link if available
-            if (episodeUrl) {
-                html += '<a href="' + episodeUrl + '" target="_blank" class="preview-link" title="Open episode page">🔗 Link</a>';
+
+            // Show flight time for sports
+            if (isSports && asset.flightTimes && asset.flightTimes.start) {
+                var startDate = new Date(asset.flightTimes.start);
+                html += '<span>📅 ' + startDate.toLocaleDateString() + ' ' + startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + '</span>';
             }
             html += '</div>';
+
+            // Show tags for sports
+            if (isSports && asset._embedded && asset._embedded.tags && asset._embedded.tags.length > 0) {
+                html += '<div class="preview-tags">';
+                asset._embedded.tags.slice(0, 3).forEach(function (tag) {
+                    html += '<span class="preview-tag">' + escapeHtml(tag.tag) + '</span>';
+                });
+                html += '</div>';
+            }
+
             html += '</div></div>';
         });
 
@@ -1212,17 +1223,47 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // ============================================
-    // QUICK TAGS (Sports)
+    // OUTPUT TABS
     // ============================================
 
-    var quickTagButtons = document.querySelectorAll('.quick-tag');
-    quickTagButtons.forEach(function (tag) {
-        tag.addEventListener('click', function () {
-            this.classList.toggle('active');
-            updateGeneratedCode();
-            triggerAutoPreview();
+    outputTabs.forEach(function (tab) {
+        tab.addEventListener('click', function () {
+            outputTabs.forEach(function (t) { t.classList.remove('active'); });
+            this.classList.add('active');
+
+            var tabName = this.dataset.tab;
+            if (tabName === 'connected') {
+                panelConnected.classList.remove('hidden');
+                panelLiquid.classList.add('hidden');
+            } else {
+                panelConnected.classList.add('hidden');
+                panelLiquid.classList.remove('hidden');
+            }
         });
     });
+
+    // ============================================
+    // COPY BUTTONS
+    // ============================================
+
+    document.querySelectorAll('.copy-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var targetId = this.dataset.target;
+            var targetEl = document.getElementById(targetId);
+            if (targetEl) {
+                copyToClipboard(targetEl.textContent);
+            }
+        });
+    });
+
+    function copyToClipboard(text) {
+        navigator.clipboard.writeText(text).then(function () {
+            showToast('Copied to clipboard!');
+        }).catch(function (err) {
+            console.error('Copy failed:', err);
+            showToast('Failed to copy');
+        });
+    }
 
     // ============================================
     // RESET FILTERS
@@ -1232,9 +1273,6 @@ document.addEventListener('DOMContentLoaded', function () {
         filterCategory.value = '';
         filterLimit.value = 10;
         filterSort.value = '-published';
-        document.querySelectorAll('.quick-tag').forEach(function (tag) {
-            tag.classList.remove('active');
-        });
         updateGeneratedCode();
         triggerAutoPreview();
         showToast('Filters reset');
@@ -1249,15 +1287,11 @@ document.addEventListener('DOMContentLoaded', function () {
         selectedSeries = [];
         currentMode = 'single';
         seriesSearch.value = '';
-
         updateModeToggle('single');
         updateModeUI();
-
         if (seriesData.length > 0) {
             renderSeriesList(seriesData);
         }
-
-        updateIsland();
         updateGeneratedCode();
         renderTemplateList();
         triggerAutoPreview();
@@ -1265,7 +1299,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     // ============================================
-    // INPUT CHANGE HANDLERS (with auto-preview)
+    // INPUT CHANGE HANDLERS
     // ============================================
 
     variableInput.addEventListener('input', function () {
@@ -1283,6 +1317,16 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     filterCategory.addEventListener('change', function () {
+        updateGeneratedCode();
+        triggerAutoPreview();
+    });
+
+    sportsLimit.addEventListener('input', function () {
+        updateGeneratedCode();
+        triggerAutoPreview();
+    });
+
+    sportsSort.addEventListener('change', function () {
         updateGeneratedCode();
         triggerAutoPreview();
     });
@@ -1313,139 +1357,6 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     // ============================================
-    // COPY BUTTONS
-    // ============================================
-
-    copyConnectedBtn.addEventListener('click', function () {
-        copyToClipboard(generatedConnectedContent);
-    });
-
-    copyLiquidBtn.addEventListener('click', function () {
-        copyToClipboard(generatedLiquidCode);
-    });
-
-    copyAllBtn.addEventListener('click', function () {
-        copyToClipboard(getCompleteCode());
-    });
-
-    function copyToClipboard(text) {
-        navigator.clipboard.writeText(text).then(function () {
-            showToast('Copied to clipboard!');
-        }).catch(function (err) {
-            console.error('Copy failed:', err);
-            showToast('Failed to copy');
-        });
-    }
-
-    // ============================================
-    // MODAL
-    // ============================================
-
-    var currentModalTab = 'connected';
-
-    function openModal(tab) {
-        currentModalTab = tab || 'connected';
-        updateModalContent();
-        modalOverlay.classList.remove('hidden');
-        document.body.style.overflow = 'hidden';
-
-        // Update tab state
-        modalTabs.forEach(function (t) {
-            t.classList.toggle('active', t.dataset.tab === currentModalTab);
-        });
-    }
-
-    function closeModal() {
-        modalOverlay.classList.add('hidden');
-        document.body.style.overflow = '';
-    }
-
-    function updateModalContent() {
-        switch (currentModalTab) {
-            case 'connected':
-                modalTitle.textContent = 'Connected Content Code';
-                modalCodeLabel.textContent = 'CONNECTED CONTENT';
-                modalCode.textContent = generatedConnectedContent;
-                break;
-            case 'liquid':
-                modalTitle.textContent = 'Liquid Template Code';
-                modalCodeLabel.textContent = 'LIQUID TEMPLATE';
-                modalCode.textContent = generatedLiquidCode;
-                break;
-            case 'complete':
-                modalTitle.textContent = 'Complete Code';
-                modalCodeLabel.textContent = 'CONNECTED CONTENT + LIQUID TEMPLATE';
-                modalCode.textContent = getCompleteCode();
-                break;
-        }
-    }
-
-    viewConnectedBtn.addEventListener('click', function () {
-        openModal('connected');
-    });
-
-    viewLiquidBtn.addEventListener('click', function () {
-        openModal('liquid');
-    });
-
-    viewAllBtn.addEventListener('click', function () {
-        openModal('complete');
-    });
-
-    modalCloseBtn.addEventListener('click', closeModal);
-
-    modalOverlay.addEventListener('click', function (e) {
-        if (e.target === modalOverlay) {
-            closeModal();
-        }
-    });
-
-    modalTabs.forEach(function (tab) {
-        tab.addEventListener('click', function () {
-            modalTabs.forEach(function (t) { t.classList.remove('active'); });
-            this.classList.add('active');
-            currentModalTab = this.dataset.tab;
-            updateModalContent();
-        });
-    });
-
-    modalCopyBtn.addEventListener('click', function () {
-        var text = modalCode.textContent;
-        copyToClipboard(text);
-    });
-
-    // ESC to close modal
-    document.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape' && !modalOverlay.classList.contains('hidden')) {
-            closeModal();
-        }
-    });
-
-    // ============================================
-    // TOOLTIPS
-    // ============================================
-
-    var infoBtns = document.querySelectorAll('.info-btn');
-
-    infoBtns.forEach(function (btn) {
-        btn.addEventListener('mouseenter', function (e) {
-            var text = this.dataset.tooltip;
-            if (!text) return;
-
-            tooltip.textContent = text;
-            tooltip.classList.add('visible');
-
-            var rect = this.getBoundingClientRect();
-            tooltip.style.left = rect.left + 'px';
-            tooltip.style.top = (rect.bottom + 8) + 'px';
-        });
-
-        btn.addEventListener('mouseleave', function () {
-            tooltip.classList.remove('visible');
-        });
-    });
-
-    // ============================================
     // UTILITIES
     // ============================================
 
@@ -1470,9 +1381,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
     renderPresetCards(contentTypes.live.presets);
     renderTemplateList();
-    updateIsland();
+    updateGeneratedCode();
 
-    console.log('SVP Builder v6.4 initialized');
-    console.log('Episode URLs: Clickable links now available for SVD, AP, BT, E24, AB, Aftenbladet');
+    console.log('SVP Builder v7.0 initialized');
+    console.log('Sports Events support added with tag-based filtering');
 
 });
