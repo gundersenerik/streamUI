@@ -656,8 +656,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         seriesList.innerHTML = '<div class="series-loading"><div class="loading-spinner"></div><p>Loading podcasts...</p></div>';
 
-        // Request additional metadata
-        var url = 'https://svp.vg.no/svp/api/v1/' + provider + '/categories?appName=svpBuilder&limit=500&additional=metadata';
+        var url = 'https://svp.vg.no/svp/api/v1/' + provider + '/categories?appName=svpBuilder&limit=500';
 
         fetch(url)
             .then(function (response) {
@@ -669,52 +668,43 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 console.log('Total categories fetched:', allCategories.length);
 
-                // METHOD 1: Filter by podcast metadata (works for most providers)
-                var metadataMatches = allCategories.filter(function (cat) {
-                    if (!cat.additional || !cat.additional.metadata) return false;
-                    var meta = cat.additional.metadata;
-                    return meta.podcast_author || meta.podcast_type || meta.podcast_acast_showId;
-                });
+                // Helper function to check if title matches podcast-related names
+                function isPodcastTitle(title) {
+                    var t = (title || '').toLowerCase();
+                    return t === 'podkast' ||
+                           t === 'poddcast' ||
+                           t === 'podcast' ||
+                           t === 'podcasts' ||
+                           t === 'poddar' ||
+                           t === 'lyd' ||
+                           t === 'audio';
+                }
 
-                // METHOD 2: Find podcasts by parent category name (for SVD, etc.)
-                // First, find the "Poddcast" or "Podcast" parent category
+                // Step 1: Try to find a top-level podcast parent category (parentId === 0)
                 var podcastParent = allCategories.find(function (cat) {
-                    var title = (cat.title || '').toLowerCase();
-                    return title === 'poddcast' || title === 'podcast' || title === 'podcasts' || title === 'poddar';
+                    return cat.parentId === 0 && isPodcastTitle(cat.title);
                 });
 
-                var parentMatches = [];
-                if (podcastParent) {
-                    console.log('Found podcast parent category:', podcastParent.title, '(ID:', podcastParent.id + ')');
-                    // Get all children of the podcast parent
-                    parentMatches = allCategories.filter(function (cat) {
-                        return cat.parentId === podcastParent.id;
+                // Step 2: If not found at top level, look for podcast category anywhere in hierarchy
+                if (!podcastParent) {
+                    podcastParent = allCategories.find(function (cat) {
+                        return isPodcastTitle(cat.title);
                     });
                 }
 
-                // Combine both methods and remove duplicates
-                var combinedIds = {};
-                var combined = [];
+                if (podcastParent) {
+                    console.log('Found podcast parent:', podcastParent.title, '(ID:', podcastParent.id + ', parentId:', podcastParent.parentId + ')');
 
-                metadataMatches.forEach(function (cat) {
-                    if (!combinedIds[cat.id]) {
-                        combinedIds[cat.id] = true;
-                        combined.push(cat);
-                    }
-                });
+                    // Step 3: Get all children of the podcast parent
+                    seriesData = allCategories.filter(function (cat) {
+                        return cat.parentId === podcastParent.id;
+                    });
 
-                parentMatches.forEach(function (cat) {
-                    if (!combinedIds[cat.id]) {
-                        combinedIds[cat.id] = true;
-                        combined.push(cat);
-                    }
-                });
-
-                seriesData = combined;
-
-                console.log('Podcasts found via metadata:', metadataMatches.length);
-                console.log('Podcasts found via parent category:', parentMatches.length);
-                console.log('Total unique podcasts:', seriesData.length);
+                    console.log('Podcasts found under parent:', seriesData.length);
+                } else {
+                    console.log('No podcast parent category found');
+                    seriesData = [];
+                }
 
                 renderSeriesList(seriesData);
 
